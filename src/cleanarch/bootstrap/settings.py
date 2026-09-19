@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     environment: Literal["development", "test", "production"] = "development"
     debug: bool = False
     log_level: str = "INFO"
+    log_format: Literal["text", "json"] = "text"
 
     database_url: str = Field(
         default="sqlite+aiosqlite:///./dev.db",

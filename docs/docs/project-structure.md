@@ -23,6 +23,7 @@ src/cleanarch/
 │   │                  clock.py       SystemClock, FixedClock
 │   └── http/          errors.py      exception → HTTP status mapping
 │                      auth.py        API-key authentication → Actor
+│                      request_id.py  X-Request-ID middleware + ContextVar
 │                      schemas.py     Schema base, ErrorResponse
 │                      dependencies.py get_event_publisher, get_clock (placeholders)
 │
@@ -44,8 +45,9 @@ src/cleanarch/
 │
 ├── bootstrap/                     TEMPLATE - composition root
 │   ├── settings.py                Settings (pydantic-settings)
+│   ├── logging.py                 text or JSON logs, request id on every line
 │   ├── transaction.py             TransactionMiddleware: one session per request, commit before send
-│   └── app.py                     create_app(): wires ports → adapters, mounts routers
+│   └── app.py                     create_app(): wires ports → adapters, routers, /health, /ready
 └── main.py                        app = create_app()   # uvicorn cleanarch.main:app
 
 tests/

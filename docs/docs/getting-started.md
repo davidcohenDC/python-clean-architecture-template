@@ -81,6 +81,7 @@ Everything is an environment variable with a default (see `.env.example` and
 | `DATABASE_URL` | `sqlite+aiosqlite:///./dev.db` | any SQLAlchemy async URL, or `memory://` |
 | `DATABASE_ECHO` | `false` | log SQL statements |
 | `LOG_LEVEL` | `INFO` | |
+| `LOG_FORMAT` | `text` | `json` for log collectors; every line carries the request id |
 | `DEBUG` | `false` | FastAPI debug mode |
 | `ENVIRONMENT` | `development` | `development` / `test` / `production` |
 | `API_KEYS` | `{}` | JSON map key → `actor[:role,...]`; empty = open API, everyone is `anonymous` |

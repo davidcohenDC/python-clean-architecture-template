@@ -18,14 +18,17 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request, Response, status
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cleanarch import __version__
+from cleanarch.bootstrap.logging import configure_logging
 from cleanarch.bootstrap.settings import Settings, get_settings
 from cleanarch.bootstrap.transaction import TransactionMiddleware, get_session
 from cleanarch.shared.http.dependencies import get_clock, get_event_publisher
 from cleanarch.shared.http.errors import register_error_handlers
+from cleanarch.shared.http.request_id import RequestIdMiddleware
 from cleanarch.shared.infrastructure.clock import SystemClock
 from cleanarch.shared.infrastructure.database import make_engine, make_session_factory
 from cleanarch.shared.infrastructure.events import InProcessEventBus
@@ -90,7 +93,7 @@ def wire_tournaments(app: FastAPI, settings: Settings) -> None:
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
-    logging.basicConfig(level=settings.log_level)
+    configure_logging(settings.log_level, settings.log_format)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -112,6 +115,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.engine = make_engine(settings.database_url, echo=settings.database_echo)
         app.state.session_factory = make_session_factory(app.state.engine)
         app.add_middleware(TransactionMiddleware, session_factory=app.state.session_factory)
+    app.add_middleware(RequestIdMiddleware)  # outermost: every response carries the id
 
     wire_shared(app, settings)
     # >>> example: tournaments
@@ -121,5 +125,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/health", tags=["ops"], summary="Liveness probe")
     async def health() -> dict[str, str]:
         return {"status": "ok", "version": __version__}
+
+    @app.get("/ready", tags=["ops"], summary="Readiness probe (checks the database)")
+    async def ready(request: Request, response: Response) -> dict[str, str]:
+        if settings.use_in_memory:
+            return {"status": "ready", "database": "memory"}
+        try:
+            async with request.app.state.session_factory() as session:
+                await session.execute(text("SELECT 1"))
+        except Exception:
+            logger.exception("readiness check failed")
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return {"status": "not ready", "database": "unreachable"}
+        return {"status": "ready", "database": "ok"}
 
     return app

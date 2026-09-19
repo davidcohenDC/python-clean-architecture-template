@@ -64,10 +64,19 @@ Same Protocol, decorated in `bootstrap`.
 
 ## Observability
 
-- Structured logging: configure it in `bootstrap` (`logging.config.dictConfig` or `structlog`).
-- Tracing/metrics: OpenTelemetry's FastAPI and SQLAlchemy instrumentations are applied in
-  `create_app` and `make_engine`; nothing inside the rings changes.
-- Request ids: a middleware in `shared/http/`.
+Shipped:
+
+- **Request ids** - `shared/http/request_id.py` reads or generates `X-Request-ID`, echoes it
+  in every response and exposes it through a `ContextVar`.
+- **Structured logs** - `bootstrap/logging.py`: `LOG_FORMAT=json` emits one JSON object per
+  line with `time`, `level`, `logger`, `message`, `request_id`; `text` for humans. Uvicorn's
+  own loggers are routed through the same handler.
+- **Probes** - `/health` (liveness) and `/ready` (runs `SELECT 1`, `503` when the database is
+  unreachable).
+
+Next steps when you need them: OpenTelemetry's FastAPI and SQLAlchemy instrumentations are
+applied in `create_app` and `make_engine`; Prometheus metrics via a middleware in
+`shared/http/`. Nothing inside the rings changes.
 
 ## A second driving adapter (CLI, consumer, gRPC)
 

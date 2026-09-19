@@ -1,0 +1,33 @@
+// semantic-release: version, tag, CHANGELOG and GitHub release from Conventional Commits.
+// Runs in the `release` job of .github/workflows/build-and-deploy.yml on pushes to main.
+import config from "semantic-release-preconfigured-conventional-commits" with { type: "json" };
+
+// Keep pyproject.toml and the package __version__ in sync with the released version.
+const prepareCmd = `
+sed -i 's/^version = ".*"/version = "\${nextRelease.version}"/' pyproject.toml
+sed -i 's/^__version__ = ".*"/__version__ = "\${nextRelease.version}"/' src/cleanarch/__init__.py
+uv lock --quiet || true
+`;
+
+const publishCmd = `
+echo "HAS_RELEASED=true" >> $GITHUB_ENV
+echo "RELEASE_VERSION=\${nextRelease.version}" >> $GITHUB_ENV
+git tag -a -f v\${nextRelease.version} v\${nextRelease.version} -F CHANGELOG.md || exit 1
+`;
+
+config.branches = ["main"];
+config.tagFormat = "v${version}";
+
+config.plugins.push(
+  ["@semantic-release/exec", { prepareCmd, publishCmd }],
+  ["@semantic-release/github", { assets: [] }],
+  [
+    "@semantic-release/git",
+    {
+      assets: ["CHANGELOG.md", "pyproject.toml", "uv.lock", "src/cleanarch/__init__.py"],
+      message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
+    },
+  ],
+);
+
+export default config;

@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Fast checks before every commit. CI runs the full suite.
+# Enabled by `make install` (git config core.hooksPath .githooks).
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+echo -e "${BLUE}Running pre-commit checks...${NC}"
+
+py_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.py$' || true)
+
+if [ -z "$py_files" ]; then
+    echo -e "${YELLOW}No Python files changed. Skipping checks.${NC}"
+    exit 0
+fi
+
+errors=0
+error_messages=""
+
+run_check() {
+    local name="$1"
+    local cmd="$2"
+
+    echo -e "\n${YELLOW}Running $name...${NC}"
+    output=$(eval "$cmd" 2>&1) || {
+        echo -e "${RED}x $name failed${NC}"
+        error_messages+="
+${RED}[$name]${NC}
+$output
+"
+        errors=$((errors + 1))
+        return 1
+    }
+    echo -e "${GREEN}ok $name${NC}"
+}
+
+run_check "ruff lint"      "uv run ruff check ."
+run_check "ruff format"    "uv run ruff format --check ."
+run_check "mypy"           "uv run mypy"
+run_check "fast tests"     "uv run pytest tests/domain tests/application tests/architecture -q"
+
+if [ $errors -gt 0 ]; then
+    echo -e "\n${RED}Failed with $errors error(s):${NC}"
+    echo -e "$error_messages"
+    echo -e "\n${YELLOW}Commit aborted. Tip: 'make format' fixes most lint issues.${NC}"
+    exit 1
+fi
+
+echo -e "\n${GREEN}All checks passed.${NC}"

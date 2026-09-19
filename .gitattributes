@@ -1,0 +1,9 @@
+# Normalise line endings so shell hooks and scripts work on every OS.
+* text=auto eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+.githooks/* text eol=lf
+Makefile text eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

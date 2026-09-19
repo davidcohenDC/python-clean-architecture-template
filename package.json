@@ -1,0 +1,16 @@
+{
+  "name": "python-clean-architecture-template",
+  "description": "Release tooling only (semantic-release). The Python project lives in pyproject.toml.",
+  "private": true,
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/davidcohenDC/python-clean-architecture-template/issues"
+  },
+  "homepage": "https://github.com/davidcohenDC/python-clean-architecture-template#readme",
+  "devDependencies": {
+    "semantic-release-preconfigured-conventional-commits": "1.1.157"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

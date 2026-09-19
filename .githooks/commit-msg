@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Enforces Conventional Commits (https://www.conventionalcommits.org/).
+# Enabled by `make install` (git config core.hooksPath .githooks).
+
+types=(
+fix feat chore docs perf revert test ci build style refactor
+)
+
+msg_file="$1"
+
+r_types="($(IFS='|'; echo "${types[*]}"))"
+r_scope="(\([[:alnum:] \/_-]+\))?"
+r_delim='!?:'
+r_subject=" [[:alnum:]].+"
+pattern="^$r_types$r_scope$r_delim$r_subject$"
+
+if grep -Eq "$pattern" "$msg_file"; then
+    exit 0
+fi
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+NC='\033[0m'
+
+echo -e "${RED}ERROR: Invalid commit message${NC}:
+${PURPLE}$( cat "$msg_file" )${NC}"
+echo -e "
+Your commit message does ${RED}not${NC} follow ${PURPLE}Conventional Commits${NC}: ${BLUE}https://www.conventionalcommits.org/${NC}
+Start with one of:
+    ${GREEN}$(IFS=' '; echo "${types[*]}")${NC}
+followed by an ${PURPLE}optional scope in parentheses${NC},
+an ${RED}exclamation mark${NC} (${RED}!${NC}) for a ${RED}breaking change${NC},
+a colon, and the subject.
+Examples:
+    ${GREEN}fix(tournaments): reject empty phase list${NC}
+    ${GREEN}feat(http): add pagination headers${NC}
+    ${GREEN}refactor(shared)!: rename EventPublisher.publish${NC}
+"
+exit 1

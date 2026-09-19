@@ -61,6 +61,7 @@ alembic/             migrations (async env, reads DATABASE_URL)
 scripts/             new_feature.py, init_project.py
 docs/                this site (Docusaurus)
 .githooks/           commit-msg (Conventional Commits), pre-commit (fast checks)
+.pre-commit-config.yaml  the same checks for the pre-commit framework
 .github/workflows/   dispatcher.yml → build-and-deploy.yml (CI, release, docs, image)
 ```
 

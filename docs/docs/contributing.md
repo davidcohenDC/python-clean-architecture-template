@@ -11,7 +11,10 @@ The full guide is in [`CONTRIBUTING.md`](https://github.com/davidcohenDC/python-
 ## Workflow
 
 ```bash
-make install        # dependencies + git hooks
+make install        # dependencies + git hooks (.githooks, bash)
+# or, with the pre-commit framework (no Git Bash needed on Windows):
+#   git config --unset core.hooksPath
+#   uvx pre-commit install --hook-type pre-commit --hook-type commit-msg
 git checkout -b feat/my-change
 # ...
 make check          # what CI runs

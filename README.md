@@ -211,7 +211,7 @@ lines in `bootstrap/app.py` and `POST /api/v1/orders` works.
 | `make migrate` / `make migration m="..."` | Alembic upgrade / autogenerate |
 | `make docs` | Docusaurus dev server |
 | `docker compose up` | API + PostgreSQL 17 |
-| `.githooks/` | `commit-msg` enforces Conventional Commits; `pre-commit` runs the fast checks |
+| `.githooks/` / `.pre-commit-config.yaml` | `commit-msg` enforces Conventional Commits; `pre-commit` runs the fast checks (bash hooks or the pre-commit framework, your choice) |
 | `.github/workflows/` | lint · tests on 3 OS × 2 Pythons · Postgres integration · Docker smoke test · docs · semantic-release · GHCR image |
 
 Releases are automatic: Conventional Commits on `main` → version, `CHANGELOG.md`, tag, GitHub

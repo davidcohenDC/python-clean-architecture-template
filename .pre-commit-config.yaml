@@ -1,0 +1,46 @@
+# Alternative to .githooks for people who prefer the pre-commit framework (works on Windows
+# without Git Bash). Same checks, same commit-message rule. Install once:
+#
+#   git config --unset core.hooksPath      # if you ran `make install` before
+#   uvx pre-commit install --hook-type pre-commit --hook-type commit-msg
+#
+# CI runs the same commands directly; hooks are a convenience, not the gate.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.2.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, chore, docs, perf, revert, test, ci, build, style, refactor]
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy --strict
+        entry: uv run mypy
+        language: system
+        pass_filenames: false
+        files: ^src/
+      - id: fast-tests
+        name: domain + application + architecture tests
+        entry: uv run pytest tests/domain tests/application tests/architecture -q
+        language: system
+        pass_filenames: false
+        files: ^(src|tests)/

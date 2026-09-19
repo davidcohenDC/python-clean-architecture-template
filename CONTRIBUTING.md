@@ -29,7 +29,12 @@ make check        # lint, types, tests: everything CI runs
 ## Commits and releases
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/); the
-`commit-msg` hook rejects anything else. Types: `feat`, `fix`, `docs`, `refactor`, `perf`,
+`commit-msg` hook rejects anything else. Two equivalent hook setups exist - pick one:
+
+- `make install` → bash hooks in `.githooks/` (needs Git Bash on Windows);
+- `uvx pre-commit install --hook-type pre-commit --hook-type commit-msg` → the
+  [pre-commit](https://pre-commit.com) framework with `.pre-commit-config.yaml` (run
+  `git config --unset core.hooksPath` first if you used `make install`). Types: `feat`, `fix`, `docs`, `refactor`, `perf`,
 `test`, `build`, `ci`, `chore`, `style`, `revert`. Add `!` for a breaking change.
 
 Releases are automatic: on every push to `main`, semantic-release reads the commits since

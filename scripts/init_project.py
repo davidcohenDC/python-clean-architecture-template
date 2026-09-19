@@ -49,9 +49,10 @@ EXAMPLE_PATHS = [
     "tests/domain/test_tournament.py",
     "tests/application/test_use_cases.py",
     "tests/integration/test_sqlalchemy_repository.py",
-    "tests/api/conftest.py",
+    "tests/api/test_auth.py",
     "tests/api/test_tournaments_api.py",
     "tests/api/test_transaction.py",
+    "tests/cli/test_cli.py",
     "alembic/versions/20260919_0001_create_tournaments.py",
 ]
 

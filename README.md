@@ -84,8 +84,10 @@ flowchart TB
     style B fill:#6b7280,color:#fff,stroke:none
 ```
 
-**Dependencies point inward, always.** `infrastructure` and `http` sit on the same ring and
-never import each other; they meet only in `bootstrap`.
+**Dependencies point inward, always.** `infrastructure`, `http` and `cli` sit on the same ring
+and never import each other; they meet only in `bootstrap`. The example feature is driven by
+both an HTTP router and a command line (`python -m cleanarch tournaments ...`) that call the
+same use cases through the same ports.
 
 ```mermaid
 sequenceDiagram
@@ -117,17 +119,20 @@ src/cleanarch/
 │                               EventPublisher port, DB session, in-process bus, HTTP error mapping
 ├── tournaments/      EXAMPLE   one feature, four rings:
 │   ├── domain/                 Tournament aggregate, phases, progress, events, rules
-│   ├── application/            use cases, TournamentRepository port, command
+│   ├── application/            use cases, TournamentRepository port, command, authorization
 │   ├── infrastructure/         in_memory.py · sqlalchemy/{models,mapping,repository}.py
-│   └── http/                   router, schemas, use-case factories
-├── bootstrap/        TEMPLATE  settings.py · app.py (wires ports → adapters, mounts routers)
-└── main.py                     uvicorn cleanarch.main:app
+│   ├── http/                   router, schemas, use-case factories
+│   └── cli/                    the same use cases from the terminal
+├── bootstrap/        TEMPLATE  settings · logging · transaction middleware · app.py · cli.py
+├── main.py                     uvicorn cleanarch.main:app
+└── __main__.py                 python -m cleanarch
 
 tests/
 ├── domain/           pure rules, no I/O                          ms
 ├── application/      use cases with the in-memory adapter        ms
 ├── integration/      SQLAlchemy adapter on SQLite / PostgreSQL   ~100 ms
-├── api/              HTTP boundary, error envelope               ms
+├── api/              HTTP boundary, auth, ops, HTTP→DB on SQLite   ms
+├── cli/              command line on a SQLite file              ms
 └── architecture/     the Dependency Rule, executable             ms
 ```
 

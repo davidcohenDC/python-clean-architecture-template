@@ -39,22 +39,26 @@ src/cleanarch/
 │   │                  errors.py      TournamentNotFound
 │   ├── infrastructure/in_memory.py  InMemoryTournamentRepository
 │   │                  sqlalchemy/    models.py, mapping.py, repository.py
-│   └── http/          router.py      5 endpoints
-│                      schemas.py     request/response models + from_domain/to_command
-│                      dependencies.py use-case factories, get_tournament_repository
+│   ├── http/          router.py      5 endpoints
+│   │                  schemas.py     request/response models + from_domain/to_command
+│   │                  dependencies.py use-case factories, get_tournament_repository
+│   └── cli/           commands.py    the same use cases from the terminal
 │
 ├── bootstrap/                     TEMPLATE - composition root
 │   ├── settings.py                Settings (pydantic-settings)
 │   ├── logging.py                 text or JSON logs, request id on every line
 │   ├── transaction.py             TransactionMiddleware: one session per request, commit before send
-│   └── app.py                     create_app(): wires ports → adapters, routers, /health, /ready
-└── main.py                        app = create_app()   # uvicorn cleanarch.main:app
+│   ├── app.py                     create_app(): wires ports → adapters, routers, /health, /ready
+│   └── cli.py                     the same wiring for the command line
+├── main.py                        app = create_app()   # uvicorn cleanarch.main:app
+└── __main__.py                    python -m cleanarch
 
 tests/
 ├── domain/          pure, no I/O                      ~40 tests, milliseconds
 ├── application/     use cases + in-memory adapters
 ├── integration/     SQLAlchemy adapter on SQLite (or Postgres via TEST_DATABASE_URL)
-├── api/             HTTP boundary with in-memory adapters
+├── api/             HTTP boundary with in-memory adapters (+ ops, auth, transaction on SQLite)
+├── cli/             the command line on a SQLite file
 └── architecture/    the Dependency Rule, executable
 
 alembic/             migrations (async env, reads DATABASE_URL)
@@ -76,6 +80,7 @@ docs/                this site (Docusaurus)
 | a dependency on the outside world (clock, mailer, another service) | a `Protocol` in `<feature>/application/ports.py` | <span className="ring ring--application">application</span> |
 | a database table / query | `<feature>/infrastructure/sqlalchemy/` | <span className="ring ring--adapters">infrastructure</span> |
 | an HTTP endpoint | `<feature>/http/router.py` + `schemas.py` | <span className="ring ring--adapters">http</span> |
+| a CLI command | `<feature>/cli/commands.py` | <span className="ring ring--adapters">cli</span> |
 | a new adapter implementation (Redis cache, S3 storage) | `<feature>/infrastructure/<tech>.py` | <span className="ring ring--adapters">infrastructure</span> |
 | the decision of *which* adapter runs | `bootstrap/app.py` | <span className="ring ring--bootstrap">bootstrap</span> |
 | a configuration value | `bootstrap/settings.py`, passed explicitly to whoever needs it | <span className="ring ring--bootstrap">bootstrap</span> |

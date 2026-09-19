@@ -2,7 +2,7 @@
 
 Source code dependencies must point *inward*:
 
-    domain  <-  application  <-  infrastructure | http  <-  bootstrap
+    domain  <-  application  <-  infrastructure | http | cli  <-  bootstrap
 
 These tests parse every module under ``cleanarch`` with ``ast`` (no import
 side effects, no third-party tooling) and fail with a readable message the
@@ -26,7 +26,16 @@ ROOT = Path(cleanarch.__file__).parent
 
 # Inner rings have lower numbers. ``infrastructure`` and ``http`` are siblings:
 # same ring, but neither may import the other.
-RING = {"domain": 0, "application": 1, "infrastructure": 2, "http": 2, "bootstrap": 3, "main": 3}
+RING = {
+    "domain": 0,
+    "application": 1,
+    "infrastructure": 2,
+    "http": 2,
+    "cli": 2,
+    "bootstrap": 3,
+    "main": 3,
+    "__main__": 3,
+}
 
 # Frameworks and I/O libraries that must never leak into the inner rings.
 OUTER_WORLD = {
@@ -53,7 +62,7 @@ class Module:
         self.name = ".".join(parts)
         # cleanarch.<feature>.<layer>... | cleanarch.bootstrap... | cleanarch.main
         self.feature = parts[1] if len(parts) > 1 else None
-        if self.feature in ("bootstrap", "main"):
+        if self.feature in ("bootstrap", "main", "__main__"):
             self.layer: str | None = self.feature
         else:
             self.layer = parts[2] if len(parts) > 2 else None
@@ -89,7 +98,7 @@ def parse(imported: str) -> tuple[str | None, str | None]:
     parts = imported.split(".")
     if parts[0] != PACKAGE or len(parts) < 2:
         return None, None
-    if parts[1] in ("bootstrap", "main"):
+    if parts[1] in ("bootstrap", "main", "__main__"):
         return parts[1], parts[1]
     return parts[1], parts[2] if len(parts) > 2 else None
 
@@ -145,7 +154,7 @@ def test_inner_rings_do_not_know_frameworks(module: Module):
 @pytest.mark.parametrize("module", MODULES, ids=ids)
 def test_features_are_isolated(module: Module):
     """``shared`` never imports a feature; a feature never imports another feature."""
-    if module.feature in (None, "bootstrap", "main"):
+    if module.feature in (None, "bootstrap", "main", "__main__"):
         return
     for imported in module.imports():
         feature, _ = parse(imported)

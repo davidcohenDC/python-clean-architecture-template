@@ -78,12 +78,13 @@ Next steps when you need them: OpenTelemetry's FastAPI and SQLAlchemy instrument
 applied in `create_app` and `make_engine`; Prometheus metrics via a middleware in
 `shared/http/`. Nothing inside the rings changes.
 
-## A second driving adapter (CLI, consumer, gRPC)
+## Another driving adapter (consumer, gRPC, scheduler)
 
-Create `tournaments/cli/` (or `consumers/`), instantiate use cases the same way
-`http/dependencies.py` does, and call `execute`. The architecture tests fail on a folder they do not know: add `cli`
-to `RING` in `tests/architecture/test_dependency_rule.py` with position 2 (same ring as
-`http`) and the rule applies to it too.
+The CLI in `tournaments/cli/` + `bootstrap/cli.py` is the worked example: build the ports,
+open a transaction, call the use case, present the result. A message consumer follows the
+same shape with a loop around it. The architecture tests fail on a folder they do not know:
+add `consumers` to `RING` in `tests/architecture/test_dependency_rule.py` with position 2
+(same ring as `http` and `cli`) and the rule applies to it too.
 
 ## Multiple features talking to each other
 

@@ -38,6 +38,7 @@ async def secured_client() -> AsyncIterator[AsyncClient]:
         yield c
 
 
+# >>> example: tournaments
 VALID_PAYLOAD = {
     "name": "Spring Cup",
     "phases": [
@@ -45,3 +46,4 @@ VALID_PAYLOAD = {
         {"config": {"kind": "bracket", "elimination": "single"}, "cut": {"players": 8}},
     ],
 }
+# <<< example: tournaments

@@ -18,6 +18,7 @@ from cleanarch.shared.application.actor import Actor
 from cleanarch.shared.domain.events import DomainEvent
 from cleanarch.shared.infrastructure.clock import FixedClock
 
+# isort: split
 # >>> example: tournaments
 from cleanarch.tournaments.domain import (
     BracketPhase,
@@ -29,12 +30,16 @@ from cleanarch.tournaments.domain import (
     TournamentId,
 )
 
-# -- builders: the *only* place tests know how to assemble a valid aggregate ----------
+# <<< example: tournaments
 
 NOW = datetime(2026, 1, 1, 12, 0, tzinfo=UTC)
 ALICE = Actor("alice")
 BOB = Actor("bob")
 ADMIN = Actor("root", frozenset({"admin"}))
+
+
+# >>> example: tournaments
+# -- builders: the *only* place tests know how to assemble a valid aggregate ----------
 
 
 def make_phases(rounds: int = 2, *, with_bracket: bool = True) -> Phases:

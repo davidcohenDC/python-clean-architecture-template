@@ -113,9 +113,14 @@ side-effect. See [ADR-002](../decisions/002-no-di-library) for the trade-offs.
 
 In hexagonal terms:
 
-- **Driving adapters** call use cases: the FastAPI router today; a CLI, a scheduler or a
-  message consumer tomorrow. They live in `http/` (or `cli/`, `consumers/`...).
-- **Driven adapters** are called by use cases through ports: repositories, the event bus.
-  They live in `infrastructure/`.
+- **Driving adapters** call use cases. The template ships two: the FastAPI router
+  (`http/`) and a command line (`cli/`, `python -m cleanarch tournaments ...`). A scheduler
+  or a message consumer would be a third.
+- **Driven adapters** are called by use cases through ports: repositories, the event bus,
+  the clock. They live in `infrastructure/`.
 
-Both are on the same ring, both are replaceable, and they never import each other.
+All of them are on the same ring, all are replaceable, and they never import each other.
+Compare `tournaments/http/router.py` with `tournaments/cli/commands.py`: same use cases,
+same ports, different way in. The CLI gets its transaction from
+`shared/infrastructure/database.transaction()` in `bootstrap/cli.py` instead of the HTTP
+middleware, which is the whole difference between the two composition roots.

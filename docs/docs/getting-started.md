@@ -61,6 +61,16 @@ curl -s -X POST localhost:8000/api/v1/tournaments/<id>/advance   # → finished
 curl -s -X POST localhost:8000/api/v1/tournaments/<id>/advance   # → 422 TournamentAlreadyFinished
 ```
 
+## The same use cases from the terminal
+
+```bash
+uv run python -m cleanarch tournaments create "Spring Cup" --rounds 2 --top 8
+uv run python -m cleanarch tournaments list
+uv run python -m cleanarch tournaments start <id>
+```
+
+Same use cases, same database, no HTTP: `tournaments/cli/` is a second driving adapter.
+
 ## Run the checks
 
 ```bash

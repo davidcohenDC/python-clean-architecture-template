@@ -43,8 +43,12 @@ for that reason.
 ## Application errors describe the request
 
 `TournamentNotFound(NotFoundError)` is raised by use cases, never by the domain: the domain
-does not know that ids can be looked up. Other `ApplicationError`s (a conflict, a permission
-problem) map to 409 by default.
+does not know that ids can be looked up. `ForbiddenError` (the actor may not do this) maps
+to 403. Other `ApplicationError`s (a conflict, for instance) map to 409 by default.
+
+Authentication failures are different: they happen *before* any use case runs, in the HTTP
+adapter (`shared/http/auth.py`), as `HTTPException(401)`. The handler in `errors.py` wraps
+them in the same envelope and keeps the `WWW-Authenticate` header.
 
 ## Nothing else crosses the boundary
 

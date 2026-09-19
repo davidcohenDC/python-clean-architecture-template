@@ -30,6 +30,7 @@ class Tournament:
     id: TournamentId
     name: str
     phases: Phases
+    organizer_id: str
     created_at: datetime
     progress: Progress = field(default_factory=Progress)
 
@@ -40,7 +41,13 @@ class Tournament:
     # -- factory ---------------------------------------------------------------
     @classmethod
     def create(
-        cls, name: str, phases: Phases, *, created_at: datetime, id: TournamentId | None = None
+        cls,
+        name: str,
+        phases: Phases,
+        *,
+        organizer_id: str,
+        created_at: datetime,
+        id: TournamentId | None = None,
     ) -> DomainResult["Tournament"]:
         """Create a new tournament. Use the constructor only to *reconstitute* one.
 
@@ -48,7 +55,11 @@ class Tournament:
         from the use case, which got it from the ``Clock`` port.
         """
         tournament = cls(
-            id=id or new_tournament_id(), name=name, phases=phases, created_at=created_at
+            id=id or new_tournament_id(),
+            name=name,
+            phases=phases,
+            organizer_id=organizer_id,
+            created_at=created_at,
         )
         return DomainResult.of(tournament, TournamentCreated(tournament.id, tournament.name))
 

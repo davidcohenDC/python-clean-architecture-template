@@ -83,6 +83,7 @@ Everything is an environment variable with a default (see `.env.example` and
 | `LOG_LEVEL` | `INFO` | |
 | `DEBUG` | `false` | FastAPI debug mode |
 | `ENVIRONMENT` | `development` | `development` / `test` / `production` |
+| `API_KEYS` | `{}` | JSON map key → `actor[:role,...]`; empty = open API, everyone is `anonymous` |
 
 ## Make it yours
 

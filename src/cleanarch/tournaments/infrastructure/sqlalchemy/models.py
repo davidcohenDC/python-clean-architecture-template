@@ -23,6 +23,7 @@ class TournamentModel(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     phase_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
     round_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    organizer_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True
     )

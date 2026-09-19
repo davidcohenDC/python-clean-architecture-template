@@ -94,6 +94,7 @@ class TournamentResponse(Schema):
     name: str
     phases: list[PhaseSchema]
     progress: ProgressSchema
+    organizer_id: str
     created_at: datetime
 
     @classmethod
@@ -103,5 +104,6 @@ class TournamentResponse(Schema):
             name=tournament.name,
             phases=[PhaseSchema.from_domain(p) for p in tournament.phases],
             progress=ProgressSchema.model_validate(tournament.progress),
+            organizer_id=tournament.organizer_id,
             created_at=tournament.created_at,
         )

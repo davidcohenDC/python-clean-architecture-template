@@ -17,3 +17,9 @@ class NotFoundError(ApplicationError):
     """The requested resource does not exist."""
 
     message = "Resource not found."
+
+
+class ForbiddenError(ApplicationError):
+    """The actor is authenticated but not allowed to do this."""
+
+    message = "Not allowed."

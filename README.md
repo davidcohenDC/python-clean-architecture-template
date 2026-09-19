@@ -200,6 +200,7 @@ lines in `bootstrap/app.py` and `POST /api/v1/orders` works.
 | FastAPI + SQLAlchemy 2 + Alembic + uv + Ruff + mypy | mainstream, typed, confined to the outer rings | - | [006](docs/docs/decisions/006-stack.md) |
 | Shape in Pydantic, rules in the domain | one source of truth per rule, on every entry path | - | [007](docs/docs/decisions/007-validation-placement.md) |
 | Separate row model + explicit mapping | frozen dataclass domain; table evolves independently | - | [008](docs/docs/decisions/008-persistence-model.md) |
+| Auth is an adapter, authorization a rule | API key → `Actor`; use cases decide; domain records `organizer_id` | JWT/OAuth: swap one file | [009](docs/docs/decisions/009-authentication-as-adapter.md) |
 
 ## Tooling
 

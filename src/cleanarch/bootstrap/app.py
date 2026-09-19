@@ -51,7 +51,8 @@ Session = Annotated[AsyncSession, Depends(get_session)]
 # -- shared wiring -----------------------------------------------------------------
 
 
-def wire_shared(app: FastAPI) -> None:
+def wire_shared(app: FastAPI, settings: Settings) -> None:
+    app.state.actors = settings.actors  # read by shared.http.auth.get_actor
     event_bus = InProcessEventBus()
     app.state.event_bus = event_bus  # features subscribe their handlers here
     app.dependency_overrides[get_event_publisher] = lambda: event_bus
@@ -112,7 +113,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.session_factory = make_session_factory(app.state.engine)
         app.add_middleware(TransactionMiddleware, session_factory=app.state.session_factory)
 
-    wire_shared(app)
+    wire_shared(app, settings)
     # >>> example: tournaments
     wire_tournaments(app, settings)
     # <<< example: tournaments

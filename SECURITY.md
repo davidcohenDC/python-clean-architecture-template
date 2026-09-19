@@ -8,7 +8,8 @@ get a reply within a week.
 
 **What ships by default**
 
-- No authentication. The example API is open on purpose; see `docs/docs/extending/authentication.md`.
+- Authentication is **off** until `API_KEYS` is set (everyone is `anonymous`). Set it before
+  exposing the API; see ADR-009 and `shared/http/auth.py`.
 - CORS is not enabled.
 - `DEBUG=false` and no stack traces in responses (unexpected errors return a generic 500 and are logged).
 - The Docker image runs as a non-root user.

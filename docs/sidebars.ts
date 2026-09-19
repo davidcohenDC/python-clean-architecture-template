@@ -41,6 +41,7 @@ const sidebars: SidebarsConfig = {
         "decisions/006-stack",
         "decisions/007-validation-placement",
         "decisions/008-persistence-model",
+        "decisions/009-authentication-as-adapter",
       ],
     },
     "benchmark",

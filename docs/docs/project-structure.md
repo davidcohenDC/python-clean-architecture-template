@@ -15,12 +15,14 @@ src/cleanarch/
 │   ├── domain/        errors.py      DomainError
 │   │                  events.py      DomainEvent (base)
 │   │                  result.py      DomainResult[T] = new aggregate + events
-│   ├── application/   errors.py      ApplicationError, NotFoundError
+│   ├── application/   errors.py      ApplicationError, NotFoundError, ForbiddenError
+│   │                  actor.py       Actor, ANONYMOUS
 │   │                  ports.py       EventPublisher, Clock (Protocols)
 │   ├── infrastructure/database.py   engine, session factory, transaction()
 │   │                  events.py      InProcessEventBus
 │   │                  clock.py       SystemClock, FixedClock
 │   └── http/          errors.py      exception → HTTP status mapping
+│                      auth.py        API-key authentication → Actor
 │                      schemas.py     Schema base, ErrorResponse
 │                      dependencies.py get_event_publisher, get_clock (placeholders)
 │

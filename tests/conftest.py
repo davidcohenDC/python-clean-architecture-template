@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+from cleanarch.shared.application.actor import Actor
 from cleanarch.shared.domain.events import DomainEvent
 from cleanarch.shared.infrastructure.clock import FixedClock
 
@@ -31,6 +32,9 @@ from cleanarch.tournaments.domain import (
 # -- builders: the *only* place tests know how to assemble a valid aggregate ----------
 
 NOW = datetime(2026, 1, 1, 12, 0, tzinfo=UTC)
+ALICE = Actor("alice")
+BOB = Actor("bob")
+ADMIN = Actor("root", frozenset({"admin"}))
 
 
 def make_phases(rounds: int = 2, *, with_bracket: bool = True) -> Phases:
@@ -46,12 +50,14 @@ def make_tournament(
     id: str = "t-1",
     rounds: int = 2,
     with_bracket: bool = True,
+    organizer_id: str = "alice",
     created_at: datetime = NOW,
 ) -> Tournament:
     return Tournament(
         id=TournamentId(id),
         name=name,
         phases=make_phases(rounds, with_bracket=with_bracket),
+        organizer_id=organizer_id,
         created_at=created_at,
     )
 

@@ -8,6 +8,8 @@ place. If you prefer functions, ``functools.partial`` gets you the same thing.
 
 from collections.abc import Sequence
 
+from cleanarch.shared.application.actor import Actor
+from cleanarch.shared.application.errors import ForbiddenError
 from cleanarch.shared.application.ports import Clock, EventPublisher
 from cleanarch.tournaments.application.commands import CreateTournamentCommand
 from cleanarch.tournaments.application.errors import TournamentNotFound
@@ -23,9 +25,12 @@ class CreateTournament:
         self._events = events
         self._clock = clock
 
-    async def execute(self, command: CreateTournamentCommand) -> Tournament:
+    async def execute(self, command: CreateTournamentCommand, actor: Actor) -> Tournament:
         result = Tournament.create(
-            name=command.name, phases=command.phases, created_at=self._clock.now()
+            name=command.name,
+            phases=command.phases,
+            organizer_id=actor.id,
+            created_at=self._clock.now(),
         )
         await self._repository.add(result.aggregate)
         await self._events.publish(result.events)
@@ -37,8 +42,9 @@ class StartTournament:
         self._repository = repository
         self._events = events
 
-    async def execute(self, tournament_id: TournamentId) -> Tournament:
+    async def execute(self, tournament_id: TournamentId, actor: Actor) -> Tournament:
         tournament = await _require(self._repository, tournament_id)
+        _authorize(actor, tournament)
         result = tournament.start()
         await self._repository.save(result.aggregate)
         await self._events.publish(result.events)
@@ -50,8 +56,9 @@ class AdvanceTournament:
         self._repository = repository
         self._events = events
 
-    async def execute(self, tournament_id: TournamentId) -> Tournament:
+    async def execute(self, tournament_id: TournamentId, actor: Actor) -> Tournament:
         tournament = await _require(self._repository, tournament_id)
+        _authorize(actor, tournament)
         result = tournament.advance()
         await self._repository.save(result.aggregate)
         await self._events.publish(result.events)
@@ -72,6 +79,13 @@ class ListTournaments:
 
     async def execute(self, *, limit: int = 20, offset: int = 0) -> Sequence[Tournament]:
         return await self._repository.list(limit=limit, offset=offset)
+
+
+def _authorize(actor: Actor, tournament: Tournament) -> None:
+    """Only the organizer (or an admin) runs a tournament. Authorization is an
+    application rule: it is about *who asks*, not about the tournament itself."""
+    if actor.id != tournament.organizer_id and not actor.is_admin:
+        raise ForbiddenError(f"Only the organizer can manage tournament '{tournament.id}'.")
 
 
 async def _require(repository: TournamentRepository, tournament_id: TournamentId) -> Tournament:

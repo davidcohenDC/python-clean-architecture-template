@@ -12,14 +12,30 @@ from httpx import ASGITransport, AsyncClient
 
 from cleanarch.bootstrap import Settings, create_app
 
+API_KEYS = {"alice-key": "alice", "bob-key": "bob", "root-key": "root:admin"}
 
-@pytest.fixture
-async def client() -> AsyncIterator[AsyncClient]:
-    app = create_app(Settings(database_url="memory://", environment="test"))
+
+async def make_client(settings: Settings) -> AsyncIterator[AsyncClient]:
+    app = create_app(settings)
     async with app.router.lifespan_context(app):
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             yield client
+
+
+@pytest.fixture
+async def client() -> AsyncIterator[AsyncClient]:
+    """Open API (no API_KEYS): everyone is the anonymous actor."""
+    async for c in make_client(Settings(database_url="memory://", environment="test")):
+        yield c
+
+
+@pytest.fixture
+async def secured_client() -> AsyncIterator[AsyncClient]:
+    """Same app with API keys configured."""
+    settings = Settings(database_url="memory://", environment="test", api_keys=API_KEYS)
+    async for c in make_client(settings):
+        yield c
 
 
 VALID_PAYLOAD = {

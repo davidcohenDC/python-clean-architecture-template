@@ -10,6 +10,8 @@ from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from cleanarch.shared.application.actor import Actor
+
 MEMORY_DATABASE_URL = "memory://"
 
 
@@ -29,6 +31,23 @@ class Settings(BaseSettings):
         ),
     )
     database_echo: bool = False
+
+    api_keys: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            'JSON object mapping an API key to an actor: {"s3cret": "alice", '
+            '"adm1n": "root:admin"}. Roles follow the id after a colon, comma-separated. '
+            "Empty (the default) disables authentication: everyone is 'anonymous'."
+        ),
+    )
+
+    @property
+    def actors(self) -> dict[str, Actor]:
+        table: dict[str, Actor] = {}
+        for key, spec in self.api_keys.items():
+            actor_id, _, roles = spec.partition(":")
+            table[key] = Actor(actor_id, frozenset(r for r in roles.split(",") if r))
+        return table
 
     @property
     def use_in_memory(self) -> bool:

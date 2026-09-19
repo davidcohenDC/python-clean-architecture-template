@@ -11,15 +11,17 @@ The recurring theme: add it as an adapter or a port, never inside `domain/` or `
 
 ## Authentication
 
-1. Choose a mechanism (JWT bearer, session cookie, API key).
-2. Put the *verification* in an http dependency: `shared/http/auth.py` with
-   `get_current_user() -> User`, raising `HTTPException(401)`. This is an adapter concern.
-3. If a use case needs to know *who* is acting, give it a small value object
-   (`Actor(id, roles)`) defined in `shared/application/`, passed by the router. The use case
-   never sees a token.
-4. Authorisation rules that are business rules ("only the organiser can start a tournament")
-   go in the domain or the use case, expressed on `Actor`, and raise `ApplicationError`
-   subclasses mapped to 403 with `register_error`.
+Shipped: API keys (`shared/http/auth.py`), `Actor` (`shared/application/actor.py`), and the
+"only the organizer can start" rule in `StartTournament`. See
+[ADR-009](../decisions/009-authentication-as-adapter).
+
+```bash
+API_KEYS='{"s3cret": "alice", "adm1n": "root:admin"}' make run
+curl -X POST localhost:8000/api/v1/tournaments -H 'X-API-Key: s3cret' ...
+```
+
+To switch to JWT: replace `get_actor` in `shared/http/auth.py` with one that verifies the
+bearer token and builds an `Actor` from its claims. Nothing else changes.
 
 ## Background jobs / outbox
 

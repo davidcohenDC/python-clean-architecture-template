@@ -4,6 +4,8 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, status
 
+from cleanarch.shared.application.actor import Actor
+from cleanarch.shared.http.auth import get_actor
 from cleanarch.shared.http.schemas import ErrorResponse
 from cleanarch.tournaments.application import (
     AdvanceTournament,
@@ -21,20 +23,28 @@ router = APIRouter(prefix="/tournaments", tags=["tournaments"])
 Responses = dict[int | str, dict[str, Any]]
 NOT_FOUND: Responses = {status.HTTP_404_NOT_FOUND: {"model": ErrorResponse}}
 RULE_VIOLATED: Responses = {status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorResponse}}
+AUTH: Responses = {
+    status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
+    status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
+}
+
+Caller = Annotated[Actor, Depends(get_actor)]
 
 
 @router.post(
     "",
     status_code=status.HTTP_201_CREATED,
     response_model=TournamentResponse,
-    responses=RULE_VIOLATED,
+    responses=RULE_VIOLATED | AUTH,
     summary="Create a tournament",
+    description="The caller becomes the organizer.",
 )
 async def create(
     body: CreateTournamentRequest,
+    actor: Caller,
     use_case: Annotated[CreateTournament, Depends(deps.create_tournament)],
 ) -> TournamentResponse:
-    tournament = await use_case.execute(body.to_command())
+    tournament = await use_case.execute(body.to_command(), actor)
     return TournamentResponse.from_domain(tournament)
 
 
@@ -65,26 +75,30 @@ async def get(
 @router.post(
     "/{tournament_id}/start",
     response_model=TournamentResponse,
-    responses=NOT_FOUND | RULE_VIOLATED,
+    responses=NOT_FOUND | RULE_VIOLATED | AUTH,
     summary="Start a tournament",
+    description="Organizer or admin only.",
 )
 async def start(
     tournament_id: str,
+    actor: Caller,
     use_case: Annotated[StartTournament, Depends(deps.start_tournament)],
 ) -> TournamentResponse:
-    tournament = await use_case.execute(TournamentId(tournament_id))
+    tournament = await use_case.execute(TournamentId(tournament_id), actor)
     return TournamentResponse.from_domain(tournament)
 
 
 @router.post(
     "/{tournament_id}/advance",
     response_model=TournamentResponse,
-    responses=NOT_FOUND | RULE_VIOLATED,
+    responses=NOT_FOUND | RULE_VIOLATED | AUTH,
     summary="Advance to the next round or phase",
+    description="Organizer or admin only.",
 )
 async def advance(
     tournament_id: str,
+    actor: Caller,
     use_case: Annotated[AdvanceTournament, Depends(deps.advance_tournament)],
 ) -> TournamentResponse:
-    tournament = await use_case.execute(TournamentId(tournament_id))
+    tournament = await use_case.execute(TournamentId(tournament_id), actor)
     return TournamentResponse.from_domain(tournament)

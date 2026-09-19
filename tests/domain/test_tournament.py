@@ -19,7 +19,9 @@ pytestmark = pytest.mark.domain
 
 class TestCreate:
     def test_generates_an_id_and_emits_created(self):
-        result = Tournament.create("Spring Cup", make_phases(), created_at=NOW)
+        result = Tournament.create(
+            "Spring Cup", make_phases(), organizer_id="alice", created_at=NOW
+        )
 
         assert result.aggregate.id
         assert result.aggregate.created_at == NOW
@@ -29,7 +31,7 @@ class TestCreate:
     @pytest.mark.parametrize("name", ["", "   ", "x" * 101])
     def test_rejects_invalid_names(self, name):
         with pytest.raises(InvalidTournamentName):
-            Tournament.create(name, make_phases(), created_at=NOW)
+            Tournament.create(name, make_phases(), organizer_id="alice", created_at=NOW)
 
 
 class TestStart:

@@ -3,8 +3,10 @@
 Mapping rules (from most to least specific):
 
 * ``NotFoundError``        → 404
+* ``ForbiddenError``       → 403
 * ``ApplicationError``     → 409  (the request is well-formed but cannot be fulfilled)
 * ``DomainError``          → 422  (the request violates a business rule)
+* ``HTTPException``        → its own status, same envelope (401 from auth, for instance)
 * anything else            → 500, logged
 
 Features may register their own, more specific mapping with
@@ -13,10 +15,10 @@ Features may register their own, more specific mapping with
 
 import logging
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
-from cleanarch.shared.application.errors import ApplicationError, NotFoundError
+from cleanarch.shared.application.errors import ApplicationError, ForbiddenError, NotFoundError
 from cleanarch.shared.domain.errors import DomainError
 from cleanarch.shared.http.schemas import ErrorResponse
 
@@ -37,8 +39,19 @@ def register_error(app: FastAPI, exc_type: type[Exception], status_code: int) ->
 
 def register_error_handlers(app: FastAPI) -> None:
     register_error(app, NotFoundError, status.HTTP_404_NOT_FOUND)
+    register_error(app, ForbiddenError, status.HTTP_403_FORBIDDEN)
     register_error(app, ApplicationError, status.HTTP_409_CONFLICT)
     register_error(app, DomainError, status.HTTP_422_UNPROCESSABLE_CONTENT)
+
+    async def http_exception(_: Request, exc: Exception) -> JSONResponse:
+        assert isinstance(exc, HTTPException)
+        names = {401: "Unauthorized", 403: "Forbidden", 404: "NotFound", 405: "MethodNotAllowed"}
+        body = ErrorResponse(error=names.get(exc.status_code, "HTTPError"), message=str(exc.detail))
+        return JSONResponse(
+            status_code=exc.status_code, content=body.model_dump(), headers=exc.headers
+        )
+
+    app.add_exception_handler(HTTPException, http_exception)
 
     async def unexpected(_: Request, exc: Exception) -> JSONResponse:
         logger.exception("unhandled error", exc_info=exc)

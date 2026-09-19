@@ -53,8 +53,12 @@ Why `typing.Protocol` and not an abstract base class?
 ## Ports live where they are used
 
 The repository port is in `tournaments/application/`, not in `domain/`: it is the use case
-that needs persistence, the domain does not. `EventPublisher` is in `shared/application/`
-because every feature publishes events the same way.
+that needs persistence, the domain does not. `EventPublisher` and `Clock` are in
+`shared/application/` because every feature publishes events and reads time the same way.
+
+`Clock` is the smallest possible port and shows the pattern end to end: `SystemClock` in
+`shared/infrastructure/clock.py`, `FixedClock` for tests, `created_at` handed to the domain
+as a value so that `Tournament.create(...)` stays pure and deterministic.
 
 If a use case needs a clock, a mailer, a payment gateway: add a `Protocol` next to
 `TournamentRepository`, take it in the use case's constructor, implement it in

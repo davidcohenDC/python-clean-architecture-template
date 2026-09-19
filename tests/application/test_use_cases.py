@@ -23,7 +23,7 @@ from cleanarch.tournaments.domain import (
     TournamentStatus,
 )
 from cleanarch.tournaments.infrastructure.in_memory import InMemoryTournamentRepository
-from tests.conftest import RecordingEventPublisher, make_phases, make_tournament
+from tests.conftest import NOW, make_phases, make_tournament
 
 pytestmark = pytest.mark.application
 
@@ -34,12 +34,13 @@ def repository() -> InMemoryTournamentRepository:
 
 
 class TestCreateTournament:
-    async def test_persists_and_publishes(self, repository, events: RecordingEventPublisher):
-        use_case = CreateTournament(repository, events)
+    async def test_persists_and_publishes(self, repository, events, clock):
+        use_case = CreateTournament(repository, events, clock)
 
         created = await use_case.execute(CreateTournamentCommand("Spring Cup", make_phases()))
 
         assert await repository.get(created.id) == created
+        assert created.created_at == NOW, "time comes from the Clock port, not datetime.now()"
         assert events.events == [TournamentCreated(created.id, "Spring Cup")]
 
 
@@ -91,9 +92,10 @@ class TestQueries:
         with pytest.raises(TournamentNotFound):
             await GetTournament(repository).execute(TournamentId("nope"))
 
-    async def test_list_paginates(self, repository):
+    async def test_list_paginates_in_creation_order(self, repository):
         for i in range(5):
-            await repository.add(make_tournament(id=f"t-{i}"))
+            created_at = NOW.replace(minute=i)
+            await repository.add(make_tournament(id=f"t-{i}", created_at=created_at))
 
         page = await ListTournaments(repository).execute(limit=2, offset=2)
 

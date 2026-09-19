@@ -6,6 +6,7 @@ domain, which is why a bad payload can produce either a 422 from Pydantic or
 a 422 from ``DomainError`` - both with a clear message.
 """
 
+from datetime import datetime
 from typing import Annotated, Literal, Self
 
 from pydantic import Field
@@ -93,6 +94,7 @@ class TournamentResponse(Schema):
     name: str
     phases: list[PhaseSchema]
     progress: ProgressSchema
+    created_at: datetime
 
     @classmethod
     def from_domain(cls, tournament: Tournament) -> Self:
@@ -101,4 +103,5 @@ class TournamentResponse(Schema):
             name=tournament.name,
             phases=[PhaseSchema.from_domain(p) for p in tournament.phases],
             progress=ProgressSchema.model_validate(tournament.progress),
+            created_at=tournament.created_at,
         )

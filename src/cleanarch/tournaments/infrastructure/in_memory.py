@@ -19,4 +19,5 @@ class InMemoryTournamentRepository:
         self._rows[tournament.id] = tournament
 
     async def list(self, *, limit: int, offset: int) -> Sequence[Tournament]:
-        return list(self._rows.values())[offset : offset + limit]
+        ordered = sorted(self._rows.values(), key=lambda t: (t.created_at, t.id))
+        return ordered[offset : offset + limit]

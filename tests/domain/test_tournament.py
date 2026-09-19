@@ -12,23 +12,24 @@ from cleanarch.tournaments.domain import (
     TournamentStarted,
     TournamentStatus,
 )
-from tests.conftest import make_phases, make_tournament
+from tests.conftest import NOW, make_phases, make_tournament
 
 pytestmark = pytest.mark.domain
 
 
 class TestCreate:
     def test_generates_an_id_and_emits_created(self):
-        result = Tournament.create("Spring Cup", make_phases())
+        result = Tournament.create("Spring Cup", make_phases(), created_at=NOW)
 
         assert result.aggregate.id
+        assert result.aggregate.created_at == NOW
         assert result.aggregate.status is TournamentStatus.NOT_STARTED
         assert result.events == (TournamentCreated(result.aggregate.id, "Spring Cup"),)
 
     @pytest.mark.parametrize("name", ["", "   ", "x" * 101])
     def test_rejects_invalid_names(self, name):
         with pytest.raises(InvalidTournamentName):
-            Tournament.create(name, make_phases())
+            Tournament.create(name, make_phases(), created_at=NOW)
 
 
 class TestStart:

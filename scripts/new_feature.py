@@ -70,6 +70,7 @@ class {entity}Created(DomainEvent):
 
 import uuid
 from dataclasses import dataclass
+from datetime import datetime
 from typing import NewType
 
 from {pkg}.shared.domain.result import DomainResult
@@ -87,14 +88,15 @@ def new_{var}_id() -> {entity}Id:
 class {entity}:
     id: {entity}Id
     name: str
+    created_at: datetime
 
     def __post_init__(self) -> None:
         if not self.name.strip():
             raise Invalid{entity}Name
 
     @classmethod
-    def create(cls, name: str) -> DomainResult["{entity}"]:
-        {var} = cls(id=new_{var}_id(), name=name)
+    def create(cls, name: str, *, created_at: datetime) -> DomainResult["{entity}"]:
+        {var} = cls(id=new_{var}_id(), name=name, created_at=created_at)
         return DomainResult.of({var}, {entity}Created({var}.id, {var}.name))
 ''',
         "application/__init__.py": f"""from {pkg}.{f}.application.errors import {entity}NotFound
@@ -120,19 +122,23 @@ class {entity}Repository(Protocol):
 
     async def get(self, {var}_id: {entity}Id) -> {entity} | None: ...
 """,
-        "application/use_cases.py": f"""from {pkg}.shared.application.ports import EventPublisher
+        "application/use_cases.py": f"""from {pkg}.shared.application.ports import Clock
+from {pkg}.shared.application.ports import EventPublisher
 from {pkg}.{f}.application.errors import {entity}NotFound
 from {pkg}.{f}.application.ports import {entity}Repository
 from {pkg}.{f}.domain import {entity}, {entity}Id
 
 
 class Create{entity}:
-    def __init__(self, repository: {entity}Repository, events: EventPublisher) -> None:
+    def __init__(
+        self, repository: {entity}Repository, events: EventPublisher, clock: Clock
+    ) -> None:
         self._repository = repository
         self._events = events
+        self._clock = clock
 
     async def execute(self, name: str) -> {entity}:
-        result = {entity}.create(name)
+        result = {entity}.create(name, created_at=self._clock.now())
         await self._repository.add(result.aggregate)
         await self._events.publish(result.events)
         return result.aggregate
@@ -171,8 +177,8 @@ __all__ = ["get_{var}_repository", "router"]
 
 from fastapi import Depends
 
-from {pkg}.shared.application.ports import EventPublisher
-from {pkg}.shared.http.dependencies import get_event_publisher
+from {pkg}.shared.application.ports import Clock, EventPublisher
+from {pkg}.shared.http.dependencies import get_clock, get_event_publisher
 from {pkg}.{f}.application import Create{entity}, Get{entity}, {entity}Repository
 
 
@@ -182,16 +188,18 @@ def get_{var}_repository() -> {entity}Repository:
 
 Repository = Annotated[{entity}Repository, Depends(get_{var}_repository)]
 Events = Annotated[EventPublisher, Depends(get_event_publisher)]
+Now = Annotated[Clock, Depends(get_clock)]
 
 
-def create_{var}(repository: Repository, events: Events) -> Create{entity}:
-    return Create{entity}(repository, events)
+def create_{var}(repository: Repository, events: Events, clock: Now) -> Create{entity}:
+    return Create{entity}(repository, events, clock)
 
 
 def get_{var}(repository: Repository) -> Get{entity}:
     return Get{entity}(repository)
 """,
-        "http/schemas.py": f"""from typing import Self
+        "http/schemas.py": f"""from datetime import datetime
+from typing import Self
 
 from {pkg}.shared.http.schemas import Schema
 from {pkg}.{f}.domain import {entity}
@@ -204,10 +212,11 @@ class Create{entity}Request(Schema):
 class {entity}Response(Schema):
     id: str
     name: str
+    created_at: datetime
 
     @classmethod
     def from_domain(cls, {var}: {entity}) -> Self:
-        return cls(id={var}.id, name={var}.name)
+        return cls(id={var}.id, name={var}.name, created_at={var}.created_at)
 """,
         "http/router.py": f"""from typing import Annotated
 

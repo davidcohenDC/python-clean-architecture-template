@@ -9,8 +9,8 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from cleanarch.shared.application.ports import EventPublisher
-from cleanarch.shared.http.dependencies import get_event_publisher
+from cleanarch.shared.application.ports import Clock, EventPublisher
+from cleanarch.shared.http.dependencies import get_clock, get_event_publisher
 from cleanarch.tournaments.application import (
     AdvanceTournament,
     CreateTournament,
@@ -27,10 +27,11 @@ def get_tournament_repository() -> TournamentRepository:
 
 Repository = Annotated[TournamentRepository, Depends(get_tournament_repository)]
 Events = Annotated[EventPublisher, Depends(get_event_publisher)]
+Now = Annotated[Clock, Depends(get_clock)]
 
 
-def create_tournament(repository: Repository, events: Events) -> CreateTournament:
-    return CreateTournament(repository, events)
+def create_tournament(repository: Repository, events: Events, clock: Now) -> CreateTournament:
+    return CreateTournament(repository, events, clock)
 
 
 def start_tournament(repository: Repository, events: Events) -> StartTournament:

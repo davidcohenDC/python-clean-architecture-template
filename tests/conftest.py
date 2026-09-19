@@ -10,10 +10,12 @@ Each test folder maps to one architectural ring:
 """
 
 from collections.abc import Sequence
+from datetime import UTC, datetime
 
 import pytest
 
 from cleanarch.shared.domain.events import DomainEvent
+from cleanarch.shared.infrastructure.clock import FixedClock
 
 # >>> example: tournaments
 from cleanarch.tournaments.domain import (
@@ -28,6 +30,8 @@ from cleanarch.tournaments.domain import (
 
 # -- builders: the *only* place tests know how to assemble a valid aggregate ----------
 
+NOW = datetime(2026, 1, 1, 12, 0, tzinfo=UTC)
+
 
 def make_phases(rounds: int = 2, *, with_bracket: bool = True) -> Phases:
     phases = [Phase(RoundPhase(rounds=rounds))]
@@ -37,10 +41,18 @@ def make_phases(rounds: int = 2, *, with_bracket: bool = True) -> Phases:
 
 
 def make_tournament(
-    name: str = "Spring Cup", *, id: str = "t-1", rounds: int = 2, with_bracket: bool = True
+    name: str = "Spring Cup",
+    *,
+    id: str = "t-1",
+    rounds: int = 2,
+    with_bracket: bool = True,
+    created_at: datetime = NOW,
 ) -> Tournament:
     return Tournament(
-        id=TournamentId(id), name=name, phases=make_phases(rounds, with_bracket=with_bracket)
+        id=TournamentId(id),
+        name=name,
+        phases=make_phases(rounds, with_bracket=with_bracket),
+        created_at=created_at,
     )
 
 
@@ -63,3 +75,8 @@ class RecordingEventPublisher:
 @pytest.fixture
 def events() -> RecordingEventPublisher:
     return RecordingEventPublisher()
+
+
+@pytest.fixture
+def clock() -> FixedClock:
+    return FixedClock(NOW)

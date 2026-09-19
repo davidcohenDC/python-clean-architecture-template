@@ -16,12 +16,13 @@ src/cleanarch/
 │   │                  events.py      DomainEvent (base)
 │   │                  result.py      DomainResult[T] = new aggregate + events
 │   ├── application/   errors.py      ApplicationError, NotFoundError
-│   │                  ports.py       EventPublisher (Protocol)
+│   │                  ports.py       EventPublisher, Clock (Protocols)
 │   ├── infrastructure/database.py   engine, session factory, transaction()
 │   │                  events.py      InProcessEventBus
+│   │                  clock.py       SystemClock, FixedClock
 │   └── http/          errors.py      exception → HTTP status mapping
 │                      schemas.py     Schema base, ErrorResponse
-│                      dependencies.py get_event_publisher (placeholder)
+│                      dependencies.py get_event_publisher, get_clock (placeholders)
 │
 ├── tournaments/                   EXAMPLE - delete me
 │   ├── domain/        tournament.py  Tournament aggregate (create/start/advance)

@@ -26,6 +26,7 @@ async def test_create_returns_201_with_full_representation(client):
     assert body["name"] == "Spring Cup"
     assert body["progress"] == {"status": "not_started", "phase_index": None, "round_index": None}
     assert body["phases"][1]["cut"] == {"players": 8}
+    assert body["created_at"].endswith("Z") or "+00:00" in body["created_at"]
 
 
 async def test_get_and_list(client):

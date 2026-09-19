@@ -39,6 +39,11 @@ class SqlAlchemyTournamentRepository:
         await self._session.flush()
 
     async def list(self, *, limit: int, offset: int) -> Sequence[Tournament]:
-        statement = select(TournamentModel).order_by(TournamentModel.id).limit(limit).offset(offset)
+        statement = (
+            select(TournamentModel)
+            .order_by(TournamentModel.created_at, TournamentModel.id)
+            .limit(limit)
+            .offset(offset)
+        )
         models = (await self._session.scalars(statement)).all()
         return [to_domain(m) for m in models]

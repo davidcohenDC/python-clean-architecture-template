@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from cleanarch.shared.infrastructure.database import Base, make_engine, make_session_factory
 from cleanarch.tournaments.domain import TournamentId, TournamentStatus
 from cleanarch.tournaments.infrastructure.sqlalchemy import SqlAlchemyTournamentRepository
-from tests.conftest import make_tournament
+from tests.conftest import NOW, make_tournament
 
 pytestmark = pytest.mark.integration
 
@@ -66,9 +66,9 @@ async def test_save_updates_existing_row(repository, session):
     assert reloaded.progress.phase_index == 0
 
 
-async def test_list_orders_and_paginates(repository, session):
+async def test_list_orders_by_creation_and_paginates(repository, session):
     for i in range(5):
-        await repository.add(make_tournament(id=f"t-{i}"))
+        await repository.add(make_tournament(id=f"t-{i}", created_at=NOW.replace(minute=i)))
     await session.commit()
 
     page = await repository.list(limit=2, offset=1)

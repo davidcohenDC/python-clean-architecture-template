@@ -8,7 +8,7 @@ place. If you prefer functions, ``functools.partial`` gets you the same thing.
 
 from collections.abc import Sequence
 
-from cleanarch.shared.application.ports import EventPublisher
+from cleanarch.shared.application.ports import Clock, EventPublisher
 from cleanarch.tournaments.application.commands import CreateTournamentCommand
 from cleanarch.tournaments.application.errors import TournamentNotFound
 from cleanarch.tournaments.application.ports import TournamentRepository
@@ -16,12 +16,17 @@ from cleanarch.tournaments.domain import Tournament, TournamentId
 
 
 class CreateTournament:
-    def __init__(self, repository: TournamentRepository, events: EventPublisher) -> None:
+    def __init__(
+        self, repository: TournamentRepository, events: EventPublisher, clock: Clock
+    ) -> None:
         self._repository = repository
         self._events = events
+        self._clock = clock
 
     async def execute(self, command: CreateTournamentCommand) -> Tournament:
-        result = Tournament.create(name=command.name, phases=command.phases)
+        result = Tournament.create(
+            name=command.name, phases=command.phases, created_at=self._clock.now()
+        )
         await self._repository.add(result.aggregate)
         await self._events.publish(result.events)
         return result.aggregate

@@ -81,8 +81,9 @@ class SubmitOrder:
 ```
 
 Need a command object? Only when there are several input fields (`CreateOrderCommand`).
-Need the current time? Add a `Clock` Protocol to `ports.py`; never call `datetime.now()`
-in a use case.
+Need the current time? Take the shared `Clock` port in the constructor (as `CreateTournament`
+does) and pass `clock.now()` into the domain; never call `datetime.now()` in a use case or
+an entity.
 
 Write `tests/application/test_order_use_cases.py` with `InMemoryOrderRepository` and
 `RecordingEventPublisher`.

@@ -1,5 +1,6 @@
 """Domain <-> row translation. The only place that knows both shapes."""
 
+from datetime import UTC, datetime
 from typing import Any
 
 from cleanarch.tournaments.domain import (
@@ -43,6 +44,7 @@ def to_model(tournament: Tournament) -> TournamentModel:
         status=tournament.progress.status.value,
         phase_index=tournament.progress.phase_index,
         round_index=tournament.progress.round_index,
+        created_at=tournament.created_at,
     )
 
 
@@ -54,11 +56,17 @@ def update_model(model: TournamentModel, tournament: Tournament) -> None:
     model.round_index = tournament.progress.round_index
 
 
+def _aware(value: datetime) -> datetime:
+    """SQLite drops the timezone; the domain always works in aware UTC."""
+    return value if value.tzinfo is not None else value.replace(tzinfo=UTC)
+
+
 def to_domain(model: TournamentModel) -> Tournament:
     return Tournament(
         id=TournamentId(model.id),
         name=model.name,
         phases=Phases.of(*(phase_from_json(p) for p in model.phases)),
+        created_at=_aware(model.created_at),
         progress=Progress(
             status=TournamentStatus(model.status),
             phase_index=model.phase_index,

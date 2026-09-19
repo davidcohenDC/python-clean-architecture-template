@@ -24,8 +24,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from cleanarch import __version__
 from cleanarch.bootstrap.settings import Settings, get_settings
 from cleanarch.bootstrap.transaction import TransactionMiddleware, get_session
-from cleanarch.shared.http.dependencies import get_event_publisher
+from cleanarch.shared.http.dependencies import get_clock, get_event_publisher
 from cleanarch.shared.http.errors import register_error_handlers
+from cleanarch.shared.infrastructure.clock import SystemClock
 from cleanarch.shared.infrastructure.database import make_engine, make_session_factory
 from cleanarch.shared.infrastructure.events import InProcessEventBus
 
@@ -54,6 +55,8 @@ def wire_shared(app: FastAPI) -> None:
     event_bus = InProcessEventBus()
     app.state.event_bus = event_bus  # features subscribe their handlers here
     app.dependency_overrides[get_event_publisher] = lambda: event_bus
+    clock = SystemClock()
+    app.dependency_overrides[get_clock] = lambda: clock
 
 
 # >>> example: tournaments

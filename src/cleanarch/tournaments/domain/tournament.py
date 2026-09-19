@@ -2,6 +2,7 @@
 
 import uuid
 from dataclasses import dataclass, field, replace
+from datetime import datetime
 from typing import NewType
 
 from cleanarch.shared.domain.result import DomainResult
@@ -29,6 +30,7 @@ class Tournament:
     id: TournamentId
     name: str
     phases: Phases
+    created_at: datetime
     progress: Progress = field(default_factory=Progress)
 
     def __post_init__(self) -> None:
@@ -38,10 +40,16 @@ class Tournament:
     # -- factory ---------------------------------------------------------------
     @classmethod
     def create(
-        cls, name: str, phases: Phases, *, id: TournamentId | None = None
+        cls, name: str, phases: Phases, *, created_at: datetime, id: TournamentId | None = None
     ) -> DomainResult["Tournament"]:
-        """Create a new tournament. Use the constructor only to *reconstitute* one."""
-        tournament = cls(id=id or new_tournament_id(), name=name, phases=phases)
+        """Create a new tournament. Use the constructor only to *reconstitute* one.
+
+        The domain never reads the clock: time comes in as a value (``created_at``)
+        from the use case, which got it from the ``Clock`` port.
+        """
+        tournament = cls(
+            id=id or new_tournament_id(), name=name, phases=phases, created_at=created_at
+        )
         return DomainResult.of(tournament, TournamentCreated(tournament.id, tournament.name))
 
     # -- queries ---------------------------------------------------------------

@@ -58,7 +58,7 @@ jobs:
         run: uv run pytest --cov --cov-report=xml --cov-report=term
       - name: Upload coverage
         if: matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.12'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: coverage.xml
           fail_ci_if_error: false

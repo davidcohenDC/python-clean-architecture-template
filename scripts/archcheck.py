@@ -1,23 +1,30 @@
-"""The Dependency Rule as a small, readable static checker.
+#!/usr/bin/env python
+"""Architecture guardrail: the Dependency Rule as a small, readable static checker.
+
+    python scripts/archcheck.py check   # exit 1 with one line per violation
+    python scripts/archcheck.py graph   # Mermaid graph of the real imports between rings
 
 Source code dependencies must point *inward*:
 
     domain  <-  application  <-  infrastructure | http | cli  <-  bootstrap
 
-``check(root, package)`` parses every module of a package with ``ast`` (no
-imports executed) and returns the violations it finds. It is used against the
-real package by ``test_dependency_rule.py`` and against small synthetic trees
-with deliberate violations by ``test_self_check.py`` - the rule is only worth
-something if it can be shown to fail.
+The tool parses every module of the package under ``src/`` with ``ast`` (no
+imports executed). It is deliberately a script, not a test: it does not care
+how you organise your tests, and ``make check`` / CI run it directly. If you
+want it inside pytest as well, ``tests/architecture/test_dependency_rule.py``
+is the one-line way.
 
 What counts as an import: ``import a.b``, ``from a import b`` (where ``b`` may
 be a submodule), relative imports, imports inside functions and inside
 ``if TYPE_CHECKING:`` blocks. Type-only imports still couple modules; a port
 is the way to depend on an outer ring, not ``TYPE_CHECKING``.
+
+Adding a ring (say ``consumers/``): add it to ``RING`` with its position.
 """
 
 import ast
 import sys
+from collections import defaultdict
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -173,3 +180,115 @@ def _judge(module: str, here: Location, imported: str, package: str) -> Iterator
         yield Violation(
             module, imported, "adapters are wired together in bootstrap, never directly"
         )
+
+
+# -- graph: the same parser, drawn ------------------------------------------------
+
+STYLE = {
+    "domain": "#16a34a",
+    "application": "#2563eb",
+    "infrastructure": "#d97706",
+    "http": "#d97706",
+    "cli": "#d97706",
+    "bootstrap": "#6b7280",
+    "main": "#6b7280",
+    "__main__": "#6b7280",
+}
+
+
+def edges(root: Path, package: str) -> dict[tuple[str, str], set[str]]:
+    """``{(from_node, to_node): {feature names that create the edge}}`` at ring granularity."""
+    found: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for path in sorted(root.rglob("*.py")):
+        parts = list(path.relative_to(root.parent).with_suffix("").parts)
+        if parts[-1] == "__init__":
+            parts.pop()
+        module = ".".join(parts)
+        here = locate(module, package)
+        if here is None or here.layer is None:
+            continue
+        for imported in imports_of(path, module, package):
+            there = locate(imported, package)
+            if there is None or there.layer is None:
+                continue
+            source, target = _node(here.feature, here.layer), _node(there.feature, there.layer)
+            if source != target:
+                found[(source, target)].add(here.feature or "")
+    return found
+
+
+def _node(feature: str | None, layer: str) -> str:
+    return "bootstrap" if layer in COMPOSITION else f"{feature}.{layer}"
+
+
+def mermaid(root: Path, package: str) -> str:
+    graph = edges(root, package)
+    nodes = sorted({n for edge in graph for n in edge})
+    lines = ["flowchart LR"]
+    for node in nodes:
+        lines.append(f'    {_id(node)}["{node}"]')
+    for source, target in sorted(graph):
+        lines.append(f"    {_id(source)} --> {_id(target)}")
+    for node in nodes:
+        layer = node.rsplit(".", 1)[-1]
+        lines.append(
+            f"    style {_id(node)} fill:{STYLE.get(layer, '#999')},color:#fff,stroke:none"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _id(node: str) -> str:
+    return node.replace(".", "_").replace("__", "x")
+
+
+def page(root: Path, package: str) -> str:  # the docs page written by scripts/graph.py
+    return (
+        "---\n"
+        "id: dependency-graph\n"
+        "title: Dependency graph (generated)\n"
+        "sidebar_position: 6\n"
+        "---\n\n"
+        "# Dependency graph, generated from the code\n\n"
+        "Every arrow below is a real `import` found by the same parser that enforces the\n"
+        "[Dependency Rule](testing#architecture-a-tool-and-optionally-a-test) - not a\n"
+        "drawing of intent. Regenerate with `make graph`; in the template repository\n"
+        "`tests/template/test_graph.py` fails when this file is stale.\n\n"
+        "```mermaid\n" + mermaid(root, package) + "```\n"
+    )
+
+
+# -- command line ------------------------------------------------------------------
+
+
+def find_package(root: Path) -> Path:
+    packages = [p for p in (root / "src").iterdir() if (p / "bootstrap").is_dir()]
+    if len(packages) != 1:
+        sys.exit(f"expected exactly one package under src/, found {[p.name for p in packages]}")
+    return packages[0]
+
+
+def main(argv: list[str]) -> int:
+    root = Path(__file__).resolve().parent.parent
+    command = argv[0] if argv else "check"
+    package_dir = find_package(root)
+    if command == "graph":
+        print(mermaid(package_dir, package_dir.name), end="")
+        return 0
+    if command != "check":
+        print(__doc__)
+        return 2
+    violations = check(package_dir, package_dir.name)
+    modules = sum(1 for _ in package_dir.rglob("*.py"))
+    if violations:
+        print(f"ARCHITECTURE: {len(violations)} violation(s) in {package_dir.name}")
+        print()
+        for violation in violations:
+            print(f"  x {violation}")
+        return 1
+    print(f"ARCHITECTURE OK: {modules} modules of '{package_dir.name}' point inward")
+    print("  domain < application < {infrastructure, http, cli} < bootstrap")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

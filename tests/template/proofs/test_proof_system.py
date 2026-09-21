@@ -14,10 +14,18 @@ from pathlib import Path
 
 import pytest
 
-from tests.proofs.registry import Proof, problems
-from tests.proofs.runner import FAIL, NO_EVIDENCE, PASS, SKIPPED, Outcome, Registry, verdicts
+from tests.template.proofs.registry import Proof, problems
+from tests.template.proofs.runner import (
+    FAIL,
+    NO_EVIDENCE,
+    PASS,
+    SKIPPED,
+    Outcome,
+    Registry,
+    verdicts,
+)
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 # -- a minimal, consistent repository layout the registry rules can be run against -----
 

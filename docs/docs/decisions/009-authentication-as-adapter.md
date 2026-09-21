@@ -35,7 +35,7 @@ Split the two concerns along the rings:
 
 - Swapping API keys for JWT, sessions or OAuth means replacing one file; use cases and tests
   that pass an `Actor` do not change.
-- Authorization rules are unit-tested with fakes (`tests/application`), independently of
+- Authorization rules are unit-tested with fakes (`tests/tournaments`), independently of
   HTTP; the HTTP tests only verify the mapping (`401`, `403`).
 - Reads are public and writes require an actor; a stricter policy is a change in the router,
   not in the use cases.
@@ -45,4 +45,4 @@ Split the two concerns along the rings:
 ## Proof
 
 - proof:authorization-in-application - the organizer rule is tested on use cases with fakes
-  (`tests/application`), and HTTP only maps 401/403 (`tests/api/test_auth.py`).
+  (`tests/tournaments`), and HTTP only maps 401/403 (`tests/tournaments/test_auth.py`).

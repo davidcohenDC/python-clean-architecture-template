@@ -78,8 +78,8 @@ make test        # whole suite with coverage
 make test-fast   # domain + application + architecture only (no I/O, < 1 s)
 make lint        # ruff check + ruff format --check
 make typecheck   # mypy --strict
-make proof       # the executable architecture guarantees, one verdict each (~20 s)
 make check       # all of the above - what CI runs
+make proof       # (template repository only) the executable guarantees, one verdict each
 ```
 
 ## Configuration

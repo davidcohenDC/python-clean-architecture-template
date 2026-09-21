@@ -3,9 +3,9 @@
 from pathlib import Path
 
 import pytest
+from archcheck import page
 
 import cleanarch
-from tests.architecture.graph import page
 
 pytestmark = pytest.mark.architecture
 

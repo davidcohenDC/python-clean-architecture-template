@@ -46,4 +46,4 @@ tests enforce both, and enforce the ring order inside every package.
   falsified on synthetic packages (`tests/architecture`).
 - proof:feature-isolation - no feature imports another, `shared` imports no feature.
 - proof:example-removal - the layout's promise that the example is one folder plus marked
-  blocks: `init_project.py --remove-example` leaves a working project (`tests/scripts`).
+  blocks: `init_project.py --remove-example` leaves a working project (`tests/template`).

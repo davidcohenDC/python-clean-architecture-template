@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from tests.proofs.registry import problems
+from tests.template.proofs.registry import problems
 
 pytestmark = pytest.mark.architecture
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_the_proof_registry_is_consistent():

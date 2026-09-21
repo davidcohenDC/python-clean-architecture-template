@@ -1,6 +1,6 @@
 # Every target is a thin alias for a command you can also type by hand (see README).
 .DEFAULT_GOAL := help
-.PHONY: help install run run-memory test test-fast lint format typecheck check proof graph migrate migration docs docs-build clean new-feature
+.PHONY: help install run run-memory test test-fast lint format typecheck architecture check graph migrate migration docs docs-build clean new-feature
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -18,8 +18,8 @@ run-memory: ## Run the API with in-memory adapters (no database at all)
 test: ## Run the whole test suite with coverage
 	uv run pytest --cov --cov-report=term-missing
 
-test-fast: ## Run only domain + application + architecture tests (no I/O)
-	uv run pytest tests/domain tests/application tests/architecture
+test-fast: ## Run the suite without the slow, copy-the-repo contract tests
+	uv run pytest -m "not contract"
 
 lint: ## Ruff lint + format check
 	uv run ruff check .
@@ -32,7 +32,10 @@ format: ## Auto-fix lint issues and format
 typecheck: ## mypy --strict
 	uv run mypy
 
-check: lint typecheck proof test ## Everything CI runs
+architecture: ## Dependency rule: every import points inward (scripts/archcheck.py)
+	uv run python scripts/archcheck.py check
+
+check: lint typecheck architecture test ## Everything CI runs
 
 migrate: ## Apply database migrations
 	uv run alembic upgrade head
@@ -52,8 +55,11 @@ docs-build: ## Build the documentation site
 clean: ## Remove caches and build artefacts
 	rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage dist build dev.db
 
-proof: ## Run the executable architecture guarantees (proofs.toml) and print the verdict
+# >>> template-only
+.PHONY: proof
+proof: ## Run the template's executable architecture guarantees (proofs.toml)
 	uv run python scripts/proof.py
+# <<< template-only
 
 graph: ## Regenerate the dependency graph page from the code
 	uv run python scripts/graph.py

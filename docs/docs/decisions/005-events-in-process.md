@@ -22,15 +22,15 @@ which the example needed.
   **records** events in the current unit of work; it does not run anything.
 - `bootstrap` dispatches the recorded events **after the transaction committed**
   (`EventDispatchMiddleware` for HTTP, the same two steps in `bootstrap/cli.py`), through
-  `InProcessEventBus`, sequentially, in publication order. Subscribers are registered in
-  `bootstrap/events.py`.
+  `InProcessEventBus`, sequentially, in publication order. Subscribers are registered by
+  each feature's `subscribe(bus)` hook in `bootstrap/features/`.
 - No outbox, no broker, no background tasks.
 
 ## Consequences
 
 - Events are testable as values: `assert result.events == (TournamentStarted(id),)`.
 - A handler that reads the database sees the **committed** state (it may open its own
-  session). Verified in `tests/api/test_events.py` on a SQLite file.
+  session). Verified in `tests/tournaments/test_events.py` on a SQLite file.
 - A rolled-back request (domain error, 4xx/5xx, failed commit) dispatches nothing.
 - A failing handler is logged with the request id and does **not** change the response:
   the write is already committed and telling the client otherwise would lie. Other handlers
@@ -58,4 +58,4 @@ table inside the transaction, and a worker delivers them with retries.
 
 - proof:events-after-commit - handlers see committed state, rolled-back requests and
   failed commits dispatch nothing, a failing handler does not change the response, the CLI
-  follows the same order (`tests/api/test_events.py`, `tests/cli/test_cli.py`).
+  follows the same order (`tests/tournaments/test_events.py`, `tests/tournaments/test_cli.py`).

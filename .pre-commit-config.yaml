@@ -38,9 +38,15 @@ repos:
         language: system
         pass_filenames: false
         files: ^src/
+      - id: architecture
+        name: dependency rule (scripts/archcheck.py)
+        entry: uv run python scripts/archcheck.py check
+        language: system
+        pass_filenames: false
+        files: ^src/
       - id: fast-tests
-        name: domain + application + architecture tests
-        entry: uv run pytest tests/domain tests/application tests/architecture -q
+        name: tests (without the slow contract tests)
+        entry: uv run pytest -m "not contract" -q
         language: system
         pass_filenames: false
         files: ^(src|tests)/

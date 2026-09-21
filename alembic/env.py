@@ -8,15 +8,11 @@ from alembic import context
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+# Importing the feature modules imports their persistence models, so that
+# ``autogenerate`` sees every table.
+import cleanarch.bootstrap.features  # noqa: F401
 from cleanarch.bootstrap.settings import get_settings
 from cleanarch.shared.infrastructure.database import Base
-
-# isort: split
-# Import every persistence model so that ``autogenerate`` sees its table.
-# >>> example: tournaments
-import cleanarch.tournaments.infrastructure.sqlalchemy.models  # noqa: F401
-
-# <<< example: tournaments
 
 config = context.config
 if config.config_file_name is not None:

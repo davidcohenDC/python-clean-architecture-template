@@ -24,7 +24,8 @@ from cleanarch.tournaments.domain import (
     TournamentStatus,
 )
 from cleanarch.tournaments.infrastructure.in_memory import InMemoryTournamentRepository
-from tests.conftest import ADMIN, ALICE, BOB, NOW, make_phases, make_tournament
+from tests.conftest import ADMIN, ALICE, BOB, NOW
+from tests.tournaments.conftest import make_phases, make_tournament
 
 pytestmark = pytest.mark.application
 

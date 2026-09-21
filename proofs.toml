@@ -3,7 +3,7 @@
 # Each entry is a property this template claims. The evidence is the set of tests
 # marked `@pytest.mark.proof("<id>")`; `make proof` runs exactly those and reports
 # one line per entry. ADRs reference an id as `proof:<id>` in their "## Proof"
-# section, or state `No executable proof: <reason>`. `tests/proofs/test_registry.py`
+# section, or state `No executable proof: <reason>`. `tests/template/proofs/test_registry.py`
 # fails when this file, the markers, the ADRs and the README disagree.
 #
 # This is not a proof that "the architecture is correct": it is a list of specific,

@@ -43,4 +43,4 @@ include it. Keep the rule in the domain.
 ## Proof
 
 No executable proof: where validation *lives* is a convention. The rules themselves are
-covered by `tests/domain`; the HTTP mapping of both 422 flavours by `tests/api`.
+covered by the domain tests of the feature; the HTTP mapping of both 422 flavours by its HTTP tests.

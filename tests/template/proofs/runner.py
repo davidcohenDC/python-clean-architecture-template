@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.proofs.registry import Registry, load, problems
+from tests.template.proofs.registry import Registry, load, problems
 
 PASS, FAIL, SKIPPED, NO_EVIDENCE = "PASS", "FAIL", "SKIPPED", "NO EVIDENCE"
 
@@ -120,4 +120,4 @@ def main(root: Path, argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(Path(__file__).resolve().parents[2], sys.argv[1:]))
+    sys.exit(main(Path(__file__).resolve().parents[3], sys.argv[1:]))

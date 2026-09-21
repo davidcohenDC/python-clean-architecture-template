@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
-from tests.api.conftest import VALID_PAYLOAD
+from tests.tournaments.conftest import VALID_PAYLOAD
 
 pytestmark = pytest.mark.api
 

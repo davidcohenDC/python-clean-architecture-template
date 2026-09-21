@@ -46,11 +46,12 @@ The domain and application rings do not change. You write one adapter and one li
 
 2. A mapping between the aggregate and the document, next to it (`mongo_mapping.py`).
 
-3. In `bootstrap/app.py`, replace the SQLAlchemy branch of `wire_tournaments` (or add a
-   third branch on a setting). Whatever owns the connection lifecycle goes in `lifespan`.
+3. In `bootstrap/features/tournaments.py`, replace the SQLAlchemy branch of `wire_http` (or
+   add a third branch on a setting). Whatever owns the connection lifecycle goes in `lifespan`.
 
-4. Copy `tests/integration/test_sqlalchemy_repository.py`, swap the fixture. The assertions
-   stay identical: that is the contract every adapter must satisfy.
+4. Copy the repository contract test of the example (`tests/tournaments/test_repository_contract.py`)
+   and add the new adapter to its `params`. The assertions stay identical: that is the
+   contract every adapter must satisfy.
 
 ## Swapping the ORM itself
 

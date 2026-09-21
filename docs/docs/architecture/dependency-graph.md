@@ -7,8 +7,9 @@ sidebar_position: 6
 # Dependency graph, generated from the code
 
 Every arrow below is a real `import` found by the same parser that enforces the
-[Dependency Rule](testing#architecture-tests) - not a drawing of intent. Regenerate
-with `make graph`; `tests/architecture/test_graph.py` fails when the file is stale.
+[Dependency Rule](testing#architecture-a-tool-and-optionally-a-test) - not a
+drawing of intent. Regenerate with `make graph`; in the template repository
+`tests/template/test_graph.py` fails when this file is stale.
 
 ```mermaid
 flowchart LR

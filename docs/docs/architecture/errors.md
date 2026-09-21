@@ -64,7 +64,7 @@ them in the same envelope and keeps the `WWW-Authenticate` header.
 - An unexpected exception is a `500` in the envelope, with the request id both in the
   response header and on the log line, so the two can be matched.
 
-`tests/api/test_errors.py` pins every row of this contract.
+`tests/http/test_errors.py` pins every row of this contract.
 
 ## Validation: shape vs rules
 

@@ -6,101 +6,69 @@ sidebar_position: 5
 
 # Testing
 
-The test suite mirrors the rings. Each folder answers one question, with one set of tools.
+The template is opinionated about the **architecture**, not about how your team tests.
+Organise tests by ring, by feature, next to the code, TDD or not - nothing in the template
+depends on the folder layout. What it gives you:
 
-| Folder | Question | Depends on | Speed |
-|---|---|---|---|
-| `tests/domain` | Are the business rules right? | nothing | ms |
-| `tests/application` | Do use cases orchestrate correctly? | in-memory adapter, recording publisher | ms |
-| `tests/integration` | Do both adapters honour the repository contract, including concurrency? | SQLite (or PostgreSQL) + in-memory | ~100 ms |
-| `tests/api` | Is the HTTP contract right, are errors mapped? | full app, in-memory adapters | ~10 ms |
-| `tests/architecture` | Does the code still respect the Dependency Rule? | the source tree | ms |
+- `pytest` with async support and a few fixtures in `tests/conftest.py`: `client` (the real
+  app with in-memory adapters), `make_settings` (ignores your `.env`), a recording event
+  publisher, a fixed clock;
+- the **dependency rule as a tool**, not a test: `scripts/archcheck.py check` runs in
+  `make check` and in CI whatever your tests look like;
+- tests for what you **inherit** (`tests/http`, `tests/bootstrap`): error envelope, request
+  ids, probes, the transaction/event unit of work - written against stub sessions and
+  throwaway routes, so they need no feature at all;
+- a worked **example** of how one feature can be tested at every level (`tests/tournaments`),
+  removed with the example.
 
 ```bash
-make test-fast   # domain + application + architecture: what the pre-commit hook runs
 make test        # everything, with coverage
+make test-fast   # without the slow contract tests (-m "not contract")
+make check       # lint, types, architecture, tests: what CI runs
 ```
 
-## Domain tests
+## The example, level by level
 
-Plain functions and classes, no fixtures beyond a couple of builders in `tests/conftest.py`:
+`tests/tournaments/` shows one way to cover a feature. Steal what you like:
 
-```python
-def test_cannot_start_twice():
-    started = make_tournament().start().aggregate
-    with pytest.raises(TournamentAlreadyStarted):
-        started.start()
-```
+| File | Level | Depends on |
+|---|---|---|
+| `test_phases.py`, `test_progress.py`, `test_tournament.py` | domain rules | nothing |
+| `test_use_cases.py` | use cases with the in-memory adapter and fakes | nothing |
+| `test_repository_contract.py` | one contract for every adapter, incl. concurrency | SQLite (or PostgreSQL via `TEST_DATABASE_URL`) |
+| `test_api.py`, `test_auth.py`, `test_errors.py` | HTTP boundary | in-memory adapters |
+| `test_transaction.py`, `test_events.py` | commit/event semantics through real HTTP | SQLite file |
+| `test_cli.py` | the CLI adapter | SQLite file |
 
-Because aggregates are immutable and events are values, assertions are equality checks:
+Because aggregates are immutable and events are values, most assertions are equalities:
 
 ```python
 assert result.events == (TournamentStarted(tournament.id),)
 ```
 
-`event_id` and `occurred_at` are excluded from equality (`compare=False`) precisely to allow this.
+Use cases receive the **real** in-memory repository, not a mock. If a use case is hard to
+test this way, its dependencies are probably not going through ports.
 
-## Application tests
+## The repository contract
 
-Use cases receive the **real** `InMemoryTournamentRepository` (it ships in `infrastructure/`)
-and a tiny `RecordingEventPublisher` fake:
+`test_repository_contract.py` is parametrised over the in-memory and the SQLAlchemy
+repository and runs the *same* tests on both, including the optimistic-concurrency race
+(two readers, one row, the second writer must get `ConflictError`). When you add an adapter,
+add it to the fixture's `params`. When you scaffold a feature, copy the file.
 
-```python
-async def test_domain_error_leaves_state_and_events_untouched(repository, events):
-    await repository.add(make_tournament(id="t-1").start().aggregate)
-    with pytest.raises(TournamentAlreadyStarted):
-        await StartTournament(repository, events).execute(TournamentId("t-1"))
-    assert events.events == []
-```
+## What you inherit is tested without you
 
-No `unittest.mock`, no patching. If a use case is hard to test this way, its dependencies
-are probably not going through ports.
+- `tests/http/test_errors.py`, `test_ops.py`: unknown route, wrong method, unexpected
+  exception, request id on every response, `/health`, `/ready`.
+- `tests/bootstrap/test_unit_of_work.py`: commit before the response, rollback on error,
+  failed commit → 500, event handlers after commit, failing handler logged - on a stub
+  session and a throwaway route, no feature involved.
 
-## Integration tests: one contract, every adapter
+## Architecture: a tool, and optionally a test
 
-`test_tournament_repository_contract.py` is parametrised over the in-memory and the
-SQLAlchemy repository and runs the *same* tests on both: round trip through a fresh reader,
-`save` returning the stored state, pagination, and the optimistic-concurrency guarantee -
-two independent readers load one row, the first saves, the second must get `ConflictError`
-and the final version must be exactly 1. A fresh schema is created per test on SQLite
-in-memory; set `TEST_DATABASE_URL` to run the SQL half against PostgreSQL (CI does).
-
-If you add a third adapter, add it to the fixture's `params` and you are done.
-
-## API tests
-
-`create_app(Settings(database_url="memory://"))` gives the real app with in-memory adapters,
-driven through `httpx.AsyncClient` and `ASGITransport`. They cover routing, validation,
-serialisation and the error envelope. `tests/api/test_transaction.py` is the exception: it
-runs the real SQLite path end to end and proves that a `422` rolls back and that a failed
-commit is a `500` with nothing persisted - the guarantee of ADR-004.
-
-## Architecture tests
-
-`tests/architecture/dependency_rule.py` is a ~170-line checker: it walks a package with
-`ast`, no imports executed, and reports every violation of four rules:
-
-1. a module imports only from its own ring or an inner one (`infrastructure`, `http` and
-   `cli` share a ring but may not import each other);
-2. `domain` and `application` import only the standard library and this package - no
-   `fastapi`, `pydantic`, `sqlalchemy`, `httpx`, nothing third-party;
-3. features never import other features, and `shared` never imports a feature;
-4. every module lives in a known ring (an unexpected folder is an error, not a free pass).
-
-It resolves relative imports, imports inside functions, imports under `TYPE_CHECKING`
-(type-only coupling is still coupling) and `from pkg.feature import layer`.
-
-`test_dependency_rule.py` runs it on `cleanarch`. `test_self_check.py` runs it on tiny
-synthetic packages, each with one deliberate violation, and asserts that every one is
-caught - the rule is falsifiable, not just present.
-
-The failure message says what to do:
-
-```text
-cleanarch.tournaments.domain.tournament (domain) imports
-cleanarch.tournaments.infrastructure.sqlalchemy (infrastructure):
-'infrastructure' is an outer ring. Invert the dependency with a port.
-```
-
-It is deliberately hand-written rather than pulled from a library so that the rule is
-*readable* in the repository, and it runs in the pre-commit hook and in CI.
+`scripts/archcheck.py` walks the package with `ast` and reports every import that points
+outward, every cross-feature import, every third-party import in `domain`/`application`,
+every module in an unknown ring (`check`); it also draws the real dependency graph
+(`graph`). `tests/architecture/test_dependency_rule.py` is the one-line pytest wrapper, for
+IDEs that only run tests. The checker's own self-check (fifteen deliberate violations that
+must be caught) lives in the template repository, not in your project.

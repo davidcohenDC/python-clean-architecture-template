@@ -2,7 +2,8 @@
 
 The HTTP app wires ports with ``dependency_overrides`` and commits through a
 middleware. Here the same ports are built by hand and each command runs inside
-``transaction()``. Two entrypoints, one application.
+``transaction()``, with events dispatched after the commit. Two entrypoints,
+one application; features add their commands through ``bootstrap/features``.
 """
 
 import argparse
@@ -14,12 +15,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from cleanarch import __version__
 from cleanarch.bootstrap.events import build_event_bus
+from cleanarch.bootstrap.features import FEATURES
 from cleanarch.bootstrap.logging import configure_logging
 from cleanarch.bootstrap.settings import Settings, get_settings
-from cleanarch.shared.application.actor import Actor
 from cleanarch.shared.application.errors import ApplicationError
 from cleanarch.shared.domain.errors import DomainError
-from cleanarch.shared.infrastructure.clock import SystemClock
 from cleanarch.shared.infrastructure.database import (
     make_engine,
     make_session_factory,
@@ -27,26 +27,16 @@ from cleanarch.shared.infrastructure.database import (
 )
 from cleanarch.shared.infrastructure.events import CollectedEvents
 
-# isort: split
-# >>> example: tournaments
-from cleanarch.tournaments import cli as tournaments_cli
-from cleanarch.tournaments.infrastructure.sqlalchemy import SqlAlchemyTournamentRepository
-
-# <<< example: tournaments
-
-OPERATOR = Actor(id="cli", roles=frozenset({"admin"}))
-"""Whoever has shell access is trusted: the CLI runs as an admin."""
-
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="cleanarch", description="Clean Architecture template CLI"
     )
     parser.add_argument("--version", action="version", version=__version__)
-    # >>> example: tournaments
-    features = parser.add_subparsers(dest="feature", required=True)
-    tournaments_cli.register(features)
-    # <<< example: tournaments
+    features = parser.add_subparsers(dest="feature")
+    for feature in FEATURES:
+        if register := getattr(feature, "register_cli", None):
+            register(features)
     return parser
 
 
@@ -67,26 +57,21 @@ async def _dispatch(args: argparse.Namespace, settings: Settings) -> None:
 async def _run_feature(
     args: argparse.Namespace, session: AsyncSession, events: CollectedEvents
 ) -> None:
-    """One branch per feature: build its ports on the shared session, run the command."""
-    feature = getattr(args, "feature", None)
-    # >>> example: tournaments
-    if feature == "tournaments":
-        ports = tournaments_cli.Ports(
-            repository=SqlAlchemyTournamentRepository(session),
-            events=events,
-            clock=SystemClock(),
-            actor=OPERATOR,
-        )
-        await tournaments_cli.run(args, ports)
-        return
-    # <<< example: tournaments
-    raise SystemExit(f"no feature registered for {feature!r}")
+    for feature in FEATURES:
+        run = getattr(feature, "run_cli", None)
+        if run and await run(args, session, events):
+            return
+    raise SystemExit(f"no feature handles {getattr(args, 'feature', None)!r}; see --help")
 
 
 def main(argv: Sequence[str] | None = None, settings: Settings | None = None) -> int:
     settings = settings or get_settings()
     configure_logging("WARNING", settings.log_format)
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if getattr(args, "feature", None) is None:
+        parser.print_help()
+        return 2
     try:
         asyncio.run(_dispatch(args, settings))
     except (DomainError, ApplicationError) as exc:

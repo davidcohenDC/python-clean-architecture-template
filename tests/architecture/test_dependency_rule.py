@@ -7,9 +7,9 @@ The checker itself lives in ``dependency_rule.py`` and is falsified by
 from pathlib import Path
 
 import pytest
+from archcheck import check
 
 import cleanarch
-from tests.architecture.dependency_rule import check
 
 pytestmark = [
     pytest.mark.architecture,

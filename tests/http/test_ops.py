@@ -9,8 +9,7 @@ from httpx import ASGITransport, AsyncClient
 from cleanarch.bootstrap import create_app
 from cleanarch.bootstrap.logging import JsonFormatter, RequestIdFilter
 from cleanarch.shared.http.request_id import request_id_var
-from tests.api.conftest import make_client
-from tests.conftest import make_settings
+from tests.conftest import make_client, make_settings
 
 pytestmark = pytest.mark.api
 

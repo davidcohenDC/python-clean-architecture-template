@@ -45,4 +45,4 @@ does not.
 
 - proof:repository-contract - the in-memory and the SQLAlchemy repositories pass the same
   contract, including a real re-read through a fresh session
-  (`tests/integration/test_tournament_repository_contract.py`).
+  (`tests/tournaments/test_repository_contract.py`).

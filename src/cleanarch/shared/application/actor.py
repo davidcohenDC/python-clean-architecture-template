@@ -20,3 +20,6 @@ class Actor:
 
 ANONYMOUS = Actor(id="anonymous")
 """The actor used when authentication is disabled (no API keys configured)."""
+
+OPERATOR = Actor(id="operator", roles=frozenset({"admin"}))
+"""Whoever has shell access: the CLI runs as this admin."""

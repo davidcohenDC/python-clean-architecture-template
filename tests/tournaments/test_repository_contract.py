@@ -18,7 +18,8 @@ from cleanarch.tournaments.application.ports import TournamentRepository
 from cleanarch.tournaments.domain import TournamentId, TournamentStatus
 from cleanarch.tournaments.infrastructure.in_memory import InMemoryTournamentRepository
 from cleanarch.tournaments.infrastructure.sqlalchemy import SqlAlchemyTournamentRepository
-from tests.conftest import NOW, make_tournament
+from tests.conftest import NOW
+from tests.tournaments.conftest import make_tournament
 
 pytestmark = [pytest.mark.integration, pytest.mark.proof("repository-contract")]
 

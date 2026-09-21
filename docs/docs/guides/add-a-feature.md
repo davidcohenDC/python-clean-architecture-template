@@ -14,22 +14,16 @@ Two ways: scaffold it, or walk the rings by hand. Both end with the same eight f
 uv run python scripts/new_feature.py orders
 ```
 
-creates `src/cleanarch/orders/` with an `Order` entity (id + name), `OrderCreated` event,
-`OrderRepository` port, `CreateOrder` / `GetOrder` use cases, an in-memory adapter and a router
-with `POST /orders` and `GET /orders/{id}`. Wire it in `bootstrap/app.py`:
+creates:
 
-```python
-from cleanarch.orders.http import get_order_repository, router as orders_router
-from cleanarch.orders.infrastructure.in_memory import InMemoryOrderRepository
+- `src/cleanarch/orders/` - an `Order` entity (id, name, created_at), `OrderCreated` event,
+  `OrderRepository` port, `CreateOrder` / `GetOrder` use cases, an in-memory adapter and a
+  router with `POST /orders` and `GET /orders/{id}`;
+- `src/cleanarch/bootstrap/features/orders.py` - the wiring, already listed in `FEATURES`;
+- `tests/test_orders.py` - a use-case test with fakes and an HTTP round trip.
 
-# inside create_app(), after wire_shared(app):
-orders = InMemoryOrderRepository()
-app.dependency_overrides[get_order_repository] = lambda: orders
-app.include_router(orders_router, prefix="/api/v1")
-```
-
-Run `make run-memory`, open `/docs`, and `POST /api/v1/orders` works. Now replace the
-placeholder fields with your model, inside-out.
+`make check` is green and `make run-memory` serves `POST /api/v1/orders` before you change a
+line. Now replace the placeholder fields with your model, inside-out.
 
 ## By hand, inside-out
 
@@ -54,8 +48,8 @@ class Order:
 ```
 
 Rules in `__post_init__` and methods. Methods return `DomainResult` (new state + events) and
-never mutate. Errors are specific `DomainError` subclasses. Write `tests/domain/test_order.py`
-now - it needs nothing.
+never mutate. Errors are specific `DomainError` subclasses. Write the domain tests now -
+they need nothing (see `tests/tournaments/test_tournament.py` for the shape).
 
 ### 2. Application - one class per operation, ports for the outside
 
@@ -85,8 +79,8 @@ Need the current time? Take the shared `Clock` port in the constructor (as `Crea
 does) and pass `clock.now()` into the domain; never call `datetime.now()` in a use case or
 an entity.
 
-Write `tests/application/test_order_use_cases.py` with `InMemoryOrderRepository` and
-`RecordingEventPublisher`.
+Test use cases with `InMemoryOrderRepository` and `RecordingEventPublisher` (from
+`tests/conftest.py`); the scaffolded `tests/test_orders.py` already does.
 
 ### 3. Infrastructure - implement the ports
 
@@ -103,7 +97,7 @@ make migration m="create orders"   # autogenerate
 make migrate
 ```
 
-Copy `tests/integration/test_tournament_repository_contract.py`: the same tests must pass on
+Copy `tests/tournaments/test_repository_contract.py`: the same tests must pass on
 your in-memory and SQL adapters, including the stale-write conflict (ADR-010).
 
 ### 4. HTTP - parse, execute, present
@@ -112,13 +106,15 @@ your in-memory and SQL adapters, including the stale-write conflict (ADR-010).
 - `dependencies.py`: `get_order_repository()` placeholder + one factory per use case.
 - `router.py`: every handler is three lines.
 
-Write `tests/api/test_orders_api.py`, including one test per error mapping.
+Add an HTTP test per error mapping (`client` fixture, see `tests/tournaments/test_api.py`).
 
 ### 5. Bootstrap - choose adapters
 
-In `bootstrap/app.py` add `wire_orders(app, settings)` next to `wire_tournaments`: pick the
-repository based on `settings.use_in_memory` and include the router. Subscribe event handlers,
-if any, in `bootstrap/events.py`; they run after the request's transaction committed.
+`bootstrap/features/orders.py` is where the feature meets the outside world. Its optional
+hooks: `wire_http(app, settings)` (pick the repository from `settings.use_in_memory`, include
+the router), `subscribe(bus)` (event handlers; they run after the request committed),
+`register_cli(subparsers)` / `run_cli(args, session, events)`. The example's module shows all
+four. The module must be listed in `bootstrap/features/__init__.py`.
 
 ### 6. Check
 
@@ -126,4 +122,4 @@ if any, in `bootstrap/events.py`; they run after the request's transaction commi
 make check
 ```
 
-`tests/architecture` will tell you if anything points the wrong way.
+`scripts/archcheck.py check` (part of it) tells you if anything points the wrong way.

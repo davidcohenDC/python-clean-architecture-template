@@ -7,8 +7,7 @@ exactly what the checker exists to prevent.
 from pathlib import Path
 
 import pytest
-
-from tests.architecture.dependency_rule import Violation, check
+from archcheck import Violation, check
 
 pytestmark = pytest.mark.architecture
 

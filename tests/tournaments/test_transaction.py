@@ -15,8 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from cleanarch.bootstrap import create_app
 from cleanarch.shared.infrastructure.database import Base
 from cleanarch.tournaments.infrastructure.sqlalchemy import TournamentModel
-from tests.api.conftest import VALID_PAYLOAD
 from tests.conftest import make_settings
+from tests.tournaments.conftest import VALID_PAYLOAD
 
 pytestmark = [pytest.mark.api, pytest.mark.proof("transaction-boundary")]
 

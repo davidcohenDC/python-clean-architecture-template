@@ -1,16 +1,19 @@
 #!/usr/bin/env python
-"""Turn the template into *your* project.
+"""Turn the template into *your* project. Run it once, right after cloning.
 
     uv run python scripts/init_project.py --name shopapi --remove-example
 
 * ``--name``            renames the Python package (``cleanarch`` -> ``shopapi``)
-                        everywhere: source, tests, alembic, Dockerfile, Makefile, docs.
-* ``--remove-example``  deletes the tournaments feature, its tests and its
-                        migration, and strips the blocks between
-                        ``>>> example`` / ``<<< example`` markers.
+                        everywhere: source, tests, alembic, Docker, Makefile, docs.
+* ``--remove-example``  deletes the ``tournaments`` feature (its package, its
+                        bootstrap module, its tests, its migrations).
 
-Run it once, right after cloning. It is safe to run on a clean git tree and
-easy to review with ``git diff``.
+Whatever the flags, it also removes what only makes sense in the template
+repository - its self-tests, the proof registry, the marketing README - and
+writes a short README for the new project. The result is a project that is
+green on ``make check`` and ready for ``scripts/new_feature.py``.
+
+Safe to run on a clean git tree; review with ``git diff``.
 """
 
 import argparse
@@ -22,6 +25,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CURRENT_PACKAGE = "cleanarch"
+EXAMPLE = "tournaments"
 
 TEXT_GLOBS = [
     "pyproject.toml",
@@ -29,9 +33,9 @@ TEXT_GLOBS = [
     "Dockerfile",
     "docker-compose.yml",
     "alembic.ini",
-    "release.config.mjs",
     "README.md",
     "CONTRIBUTING.md",
+    "release.config.mjs",
     "alembic/**/*.py",
     "src/**/*.py",
     "tests/**/*.py",
@@ -40,29 +44,28 @@ TEXT_GLOBS = [
     "docs/docs/**/*.mdx",
     ".github/**/*.yml",
     ".github/**/*.md",
+    ".githooks/*",
+    ".pre-commit-config.yaml",
 ]
 
+# Only meaningful in the template repository itself.
+TEMPLATE_ONLY = [
+    "tests/template",
+    "proofs.toml",
+    "scripts/proof.py",
+    "docs/docs/proofs.md",
+]
+
+# The example feature: one package, one bootstrap module, one test folder, its migrations.
 EXAMPLE_PATHS = [
-    "src/{pkg}/tournaments",
-    "tests/domain/test_phases.py",
-    "tests/domain/test_progress.py",
-    "tests/domain/test_tournament.py",
-    "tests/application/test_use_cases.py",
-    "tests/integration/test_tournament_repository_contract.py",
-    "tests/api/test_auth.py",
-    "tests/api/test_events.py",
-    "tests/api/test_tournament_errors.py",
-    "tests/api/test_tournaments_api.py",
-    "tests/api/test_transaction.py",
-    "tests/cli/test_cli.py",
+    "src/{pkg}/" + EXAMPLE,
+    "src/{pkg}/bootstrap/features/" + EXAMPLE + ".py",
+    "tests/" + EXAMPLE,
 ]
-
-# Every migration shipped with the template belongs to the example: the template itself
-# owns no tables. Removing the example therefore empties the chain instead of cherry-picking.
 EXAMPLE_MIGRATIONS = "alembic/versions"
 
-MARKER = re.compile(
-    r"^[ \t]*# >>> example: tournaments\n.*?^[ \t]*# <<< example: tournaments\n",
+TEMPLATE_BLOCK = re.compile(
+    r"^[ \t]*(#|<!--)[ ]*>>> template-only.*?^[ \t]*(#|<!--)[ ]*<<< template-only[^\n]*\n",
     re.DOTALL | re.MULTILINE,
 )
 
@@ -72,6 +75,14 @@ def text_files() -> list[Path]:
     for pattern in TEXT_GLOBS:
         files.extend(p for p in ROOT.glob(pattern) if p.is_file())
     return files
+
+
+def remove(relative: str) -> None:
+    path = ROOT / relative
+    if path.is_dir():
+        shutil.rmtree(path)
+    elif path.exists():
+        path.unlink()
 
 
 def rename_package(new: str) -> None:
@@ -86,28 +97,81 @@ def rename_package(new: str) -> None:
         if updated != content:
             path.write_text(updated, encoding="utf-8")
     src_old.rename(src_new)
+    settings = ROOT / "src" / new / "bootstrap" / "settings.py"
+    replacements = [
+        (ROOT / "pyproject.toml", 'name = "python-clean-architecture-template"', f'name = "{new}"'),
+        (
+            settings,
+            'app_name: str = "python-clean-architecture-template"',
+            f'app_name: str = "{new}"',
+        ),
+    ]
+    for path, old, fresh in replacements:
+        path.write_text(path.read_text(encoding="utf-8").replace(old, fresh, 1), encoding="utf-8")
     print(f"renamed package {CURRENT_PACKAGE} -> {new}")
+
+
+def strip_template_only() -> None:
+    for relative in TEMPLATE_ONLY:
+        remove(relative)
+    for path in text_files():
+        content = path.read_text(encoding="utf-8")
+        updated = TEMPLATE_BLOCK.sub("", content)
+        if updated != content:
+            path.write_text(updated, encoding="utf-8")
+    print("removed the template's own checks (tests/template, proofs.toml, make proof)")
 
 
 def remove_example(pkg: str) -> None:
     for relative in EXAMPLE_PATHS:
-        path = ROOT / relative.format(pkg=pkg)
-        if path.is_dir():
-            shutil.rmtree(path)
-        elif path.exists():
-            path.unlink()
+        remove(relative.format(pkg=pkg))
     for migration in (ROOT / EXAMPLE_MIGRATIONS).glob("*.py"):
-        migration.unlink()
-    for path in text_files():
-        content = path.read_text(encoding="utf-8")
-        updated = MARKER.sub("", content)
-        if updated != content:
-            path.write_text(updated, encoding="utf-8")
-    print("removed the tournaments example feature (and its migrations: the chain is empty)")
-    print("next: uv run python scripts/new_feature.py <your_feature>")
-    print(
-        "note: `make proof` now reports NO EVIDENCE for the guarantees the example used to "
-        "prove; mark the tests of your feature with @pytest.mark.proof(...) or edit proofs.toml"
+        migration.unlink()  # every shipped migration belongs to the example
+    init = ROOT / "src" / pkg / "bootstrap" / "features" / "__init__.py"
+    text = init.read_text(encoding="utf-8")
+    text = re.sub(rf"^from {pkg}\.bootstrap\.features import {EXAMPLE}\n", "", text, flags=re.M)
+    text = re.sub(rf"(?<=[\[, ]){EXAMPLE}\b,?\s*", "", text)  # drop it from the FEATURES list
+    text = text.replace("import ,", "import").replace("[, ", "[")
+    text = re.sub(r"^from \S+ import\s*$\n?", "", text, flags=re.M)  # an emptied import line
+    init.write_text(text, encoding="utf-8")
+    print(f"removed the {EXAMPLE} example (package, bootstrap module, tests, migrations)")
+
+
+def write_readme(pkg: str) -> None:
+    (ROOT / "README.md").write_text(
+        f"""# {pkg}
+
+Built from [python-clean-architecture-template](https://github.com/davidcohenDC/python-clean-architecture-template).
+
+```bash
+make install     # dependencies + git hooks
+make run         # migrations + API with reload -> http://localhost:8000/docs
+make check       # lint, types, architecture (dependency rule), tests
+```
+
+## Add a feature
+
+```bash
+uv run python scripts/new_feature.py orders
+```
+
+creates `src/{pkg}/orders/` (domain, application, infrastructure, http), wires it in
+`src/{pkg}/bootstrap/features/orders.py` and writes `tests/test_orders.py`.
+
+## Layout
+
+```text
+src/{pkg}/
+├── shared/        building blocks reused by every feature
+├── <feature>/     domain -> application -> infrastructure | http | cli
+├── bootstrap/     settings, app factory, transaction/event middlewares, features/
+└── main.py        uvicorn {pkg}.main:app
+```
+
+Dependencies point inward; `scripts/archcheck.py check` (part of `make check`) fails
+otherwise. The architecture and its decisions are documented in `docs/`.
+""",
+        encoding="utf-8",
     )
 
 
@@ -116,21 +180,23 @@ def main() -> None:
     parser.add_argument("--name", help="new package name (lowercase identifier)")
     parser.add_argument("--remove-example", action="store_true")
     args = parser.parse_args()
-    if not args.name and not args.remove_example:
-        parser.error("nothing to do: pass --name and/or --remove-example")
 
     pkg = CURRENT_PACKAGE
     if args.name and args.name != CURRENT_PACKAGE:
         rename_package(args.name)
         pkg = args.name
+    strip_template_only()
     if args.remove_example:
         remove_example(pkg)
+    write_readme(pkg)
+
     if ruff := shutil.which("ruff"):  # tidy imports/blank lines left behind by the edits
         subprocess.run([ruff, "check", "--fix", "-q", str(ROOT)], check=False)
         subprocess.run([ruff, "format", "-q", str(ROOT)], check=False)
     if (ROOT / "docs" / "docs" / "architecture" / "dependency-graph.md").exists():
         subprocess.run([sys.executable, str(ROOT / "scripts" / "graph.py")], check=False)
-    print("done - review with `git diff`, then run `make check`")
+    print("done - review with `git diff`, then: make check")
+    print("next: uv run python scripts/new_feature.py <your_feature>")
 
 
 if __name__ == "__main__":

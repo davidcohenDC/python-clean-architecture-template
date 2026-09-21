@@ -49,14 +49,14 @@ Three moving parts, no duplication:
    the ADRs that made the decision.
 2. **Evidence** is ordinary tests carrying `@pytest.mark.proof("<id>")`. The runner deselects
    everything else, so `make proof` takes ~20 s.
-3. **Traceability** is checked by `tests/proofs/test_registry.py` (and again by the runner
+3. **Traceability** is checked by `tests/template/proofs/test_registry.py` (and again by the runner
    before it starts): every ADR either cites `proof:<id>` lines or states
    `No executable proof: <reason>`; every id cited anywhere must exist; every registered id
    must appear in the README table; an ADR listed for a proof must cite it back.
 
 ## Falsifiable, on purpose
 
-`tests/proofs/test_proof_system.py` proves the prover:
+`tests/template/proofs/test_proof_system.py` proves the prover:
 
 - a mapping broken in any direction is reported (unknown id in an ADR, in a test, in the
   README; ADR without a proof statement; non-reciprocated reference);
@@ -76,12 +76,13 @@ Three moving parts, no duplication:
 
 `make proof` (and CI) will tell you if you skipped a step.
 
-## After `--remove-example`
+## In your project
 
-The guarantees whose evidence lived in the example (repository contract, concurrency,
-transaction boundary, events, authorization) come back as `NO EVIDENCE` in your new project.
-That is deliberate: they are properties of *a feature's adapters*, and your feature has to
-prove them again - mark its tests, or drop the entries you do not need.
+`make proof`, `proofs.toml` and the ADR/README traceability are the **template's** way of
+proving its own claims; `scripts/init_project.py` removes them. What you keep is what has
+durable value: the dependency rule as a tool in `make check` and CI, and tests for the
+mechanisms you inherit (`tests/http`, `tests/bootstrap`). Your guarantees are your tests -
+the template does not impose a registry, a marker or a documentation contract on you.
 
 ## What it does not claim
 

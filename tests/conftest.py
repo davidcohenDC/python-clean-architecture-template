@@ -1,92 +1,40 @@
-"""Shared fixtures and builders.
+"""Fixtures and helpers every test may use. Nothing here depends on a feature.
 
-Each test folder maps to one architectural ring:
-
-    tests/domain        -> cleanarch.*.domain          (pure, no I/O)
-    tests/application   -> cleanarch.*.application     (use cases + fakes)
-    tests/integration   -> cleanarch.*.infrastructure  (real DB)
-    tests/api           -> cleanarch.*.http + bootstrap (HTTP boundary)
-    tests/architecture  -> the Dependency Rule itself
+Organise your tests however you like - by ring, by feature, next to the code - the
+template only assumes ``pytest`` and these few helpers.
 """
 
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 from datetime import UTC, datetime
 
 import pytest
+from httpx import ASGITransport, AsyncClient
 
-from cleanarch.bootstrap.settings import Settings
+from cleanarch.bootstrap import Settings, create_app
 from cleanarch.shared.application.actor import Actor
 from cleanarch.shared.domain.events import DomainEvent
 from cleanarch.shared.infrastructure.clock import FixedClock
-
-# isort: split
-# >>> example: tournaments
-from cleanarch.tournaments.domain import (
-    BracketPhase,
-    Phase,
-    Phases,
-    RoundPhase,
-    TopCut,
-    Tournament,
-    TournamentId,
-)
-
-# <<< example: tournaments
 
 NOW = datetime(2026, 1, 1, 12, 0, tzinfo=UTC)
 ALICE = Actor("alice")
 BOB = Actor("bob")
 ADMIN = Actor("root", frozenset({"admin"}))
+API_KEYS = {"alice-key": "alice", "bob-key": "bob", "root-key": "root:admin"}
 
 
-# >>> example: tournaments
-# -- builders: the *only* place tests know how to assemble a valid aggregate ----------
-
-
-def make_phases(rounds: int = 2, *, with_bracket: bool = True) -> Phases:
-    phases = [Phase(RoundPhase(rounds=rounds))]
-    if with_bracket:
-        phases.append(Phase(BracketPhase(), cut=TopCut(players=8)))
-    return Phases.of(*phases)
-
-
-def make_tournament(
-    name: str = "Spring Cup",
-    *,
-    id: str = "t-1",
-    rounds: int = 2,
-    with_bracket: bool = True,
-    organizer_id: str = "alice",
-    created_at: datetime = NOW,
-) -> Tournament:
-    return Tournament(
-        id=TournamentId(id),
-        name=name,
-        phases=make_phases(rounds, with_bracket=with_bracket),
-        organizer_id=organizer_id,
-        created_at=created_at,
-    )
-
-
-# <<< example: tournaments
-
-
-# -- fakes -------------------------------------------------------------------------
+def make_settings(**overrides: object) -> Settings:
+    """Settings for tests: explicit values only, never the developer's ``.env``."""
+    return Settings(_env_file=None, environment="test", **overrides)  # type: ignore[arg-type]
 
 
 class RecordingEventPublisher:
-    """``EventPublisher`` that remembers what was published. Used by application tests."""
+    """``EventPublisher`` that remembers what was published."""
 
     def __init__(self) -> None:
         self.events: list[DomainEvent] = []
 
     async def publish(self, events: Sequence[DomainEvent]) -> None:
         self.events.extend(events)
-
-
-def make_settings(**overrides: object) -> Settings:
-    """Settings for tests: explicit values only, never the developer's ``.env``."""
-    return Settings(_env_file=None, environment="test", **overrides)  # type: ignore[arg-type]
 
 
 @pytest.fixture
@@ -97,3 +45,26 @@ def events() -> RecordingEventPublisher:
 @pytest.fixture
 def clock() -> FixedClock:
     return FixedClock(NOW)
+
+
+async def make_client(settings: Settings) -> AsyncIterator[AsyncClient]:
+    """The real app, in-process, with the adapters ``settings`` selects."""
+    app = create_app(settings)
+    async with app.router.lifespan_context(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            yield client
+
+
+@pytest.fixture
+async def client() -> AsyncIterator[AsyncClient]:
+    """Open API with in-memory adapters (no database): everyone is the anonymous actor."""
+    async for c in make_client(make_settings(database_url="memory://")):
+        yield c
+
+
+@pytest.fixture
+async def secured_client() -> AsyncIterator[AsyncClient]:
+    """Same app with API keys configured (see ``API_KEYS``)."""
+    async for c in make_client(make_settings(database_url="memory://", api_keys=API_KEYS)):
+        yield c

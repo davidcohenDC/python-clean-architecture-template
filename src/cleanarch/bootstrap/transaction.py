@@ -25,7 +25,9 @@ database); adapters never import each other.
 
 import logging
 from collections.abc import Awaitable, Callable
+from typing import Annotated
 
+from fastapi import Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -91,6 +93,10 @@ def get_session(request: Request) -> AsyncSession:
     """FastAPI dependency: the session opened by ``TransactionMiddleware``."""
     session: AsyncSession = request.state.session
     return session
+
+
+Session = Annotated[AsyncSession, Depends(get_session)]
+"""Type alias for repository providers: ``def repo(session: Session) -> ...``."""
 
 
 def get_events(request: Request) -> EventPublisher:

@@ -12,7 +12,8 @@ from cleanarch.tournaments.domain import (
     TournamentStarted,
     TournamentStatus,
 )
-from tests.conftest import NOW, make_phases, make_tournament
+from tests.conftest import NOW
+from tests.tournaments.conftest import make_phases, make_tournament
 
 pytestmark = pytest.mark.domain
 

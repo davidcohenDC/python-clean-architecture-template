@@ -34,8 +34,12 @@ jobs:
         run: uv run ruff format --check .
       - name: Type-check
         run: uv run mypy
+      - name: Architecture (dependency rule)
+        run: uv run python scripts/archcheck.py check
+      # >>> template-only
       - name: Architecture proof (make proof)
         run: uv run python scripts/proof.py
+      # <<< template-only
 
   test:
     strategy:
@@ -93,7 +97,7 @@ jobs:
           uv run alembic upgrade head
           uv run alembic check
       - name: Integration tests (PostgreSQL)
-        run: uv run pytest tests/integration -q
+        run: uv run pytest -m integration -q
 
   docker-build:
     runs-on: ubuntu-24.04

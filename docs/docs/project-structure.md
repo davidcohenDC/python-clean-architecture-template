@@ -48,22 +48,28 @@ src/cleanarch/
 │   ├── settings.py                Settings (pydantic-settings)
 │   ├── logging.py                 text or JSON logs, request id on every line
 │   ├── transaction.py             TransactionMiddleware + EventDispatchMiddleware: commit, then events
-│   ├── events.py                  build_event_bus(): the subscribers
-│   ├── app.py                     create_app(): wires ports → adapters, routers, /health, /ready
-│   └── cli.py                     the same wiring for the command line
+│   ├── events.py                  build_event_bus(): asks every feature for its subscribers
+│   ├── features/                  one module per feature: wire_http, subscribe, register_cli, run_cli
+│   │   ├── __init__.py            FEATURES = [tournaments]   <- the only list to edit
+│   │   └── tournaments.py         EXAMPLE
+│   ├── app.py                     create_app(): middlewares, shared ports, every feature's wire_http
+│   └── cli.py                     the same for the command line
 ├── main.py                        app = create_app()   # uvicorn cleanarch.main:app
 └── __main__.py                    python -m cleanarch
 
-tests/
-├── domain/          pure, no I/O, milliseconds
-├── application/     use cases + in-memory adapters
-├── integration/     repository contract on in-memory + SQLite (or Postgres via TEST_DATABASE_URL)
-├── api/             HTTP boundary with in-memory adapters (+ ops, auth, transaction on SQLite)
-├── cli/             the command line on a SQLite file
-└── architecture/    the Dependency Rule, executable
+tests/                         organise yours as you like; the template assumes only pytest
+├── conftest.py                  client fixture, make_settings (no .env), fakes
+├── http/, bootstrap/            what you inherit, tested without any feature
+├── architecture/                one-line pytest wrapper around scripts/archcheck.py
+├── tournaments/                 EXAMPLE - one feature tested at every level
+└── template/                    TEMPLATE-ONLY - self-checks, proof system, user journey
+
+scripts/
+├── archcheck.py                 dependency rule (check) and real dependency graph (graph)
+├── new_feature.py               scaffold: package + bootstrap module + first test
+└── init_project.py              make it yours: rename, remove example, strip template-only
 
 alembic/             migrations (async env, reads DATABASE_URL)
-scripts/             new_feature.py, init_project.py
 docs/                this site (Docusaurus)
 .githooks/           commit-msg (Conventional Commits), pre-commit (fast checks)
 .pre-commit-config.yaml  the same checks for the pre-commit framework
@@ -83,7 +89,7 @@ docs/                this site (Docusaurus)
 | an HTTP endpoint | `<feature>/http/router.py` + `schemas.py` | <span className="ring ring--adapters">http</span> |
 | a CLI command | `<feature>/cli/commands.py` | <span className="ring ring--adapters">cli</span> |
 | a new adapter implementation (Redis cache, S3 storage) | `<feature>/infrastructure/<tech>.py` | <span className="ring ring--adapters">infrastructure</span> |
-| the decision of *which* adapter runs | `bootstrap/app.py` | <span className="ring ring--bootstrap">bootstrap</span> |
+| the decision of *which* adapter runs | `bootstrap/features/<feature>.py` | <span className="ring ring--bootstrap">bootstrap</span> |
 | a configuration value | `bootstrap/settings.py`, passed explicitly to whoever needs it | <span className="ring ring--bootstrap">bootstrap</span> |
 | code two features both need | `shared/<ring>/` - and ask yourself twice | any |
 

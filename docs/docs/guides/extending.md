@@ -83,7 +83,7 @@ applied in `create_app` and `make_engine`; Prometheus metrics via a middleware i
 The CLI in `tournaments/cli/` + `bootstrap/cli.py` is the worked example: build the ports,
 open a transaction, call the use case, present the result. A message consumer follows the
 same shape with a loop around it. The architecture tests fail on a folder they do not know:
-add `consumers` to `RING` in `tests/architecture/dependency_rule.py` with position 2
+add `consumers` to `RING` in `scripts/archcheck.py` with position 2
 (same ring as `http` and `cli`) and the rule applies to it too.
 
 ## Multiple features talking to each other

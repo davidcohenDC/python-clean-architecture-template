@@ -28,7 +28,7 @@ interchangeable adapters" must also promise they fail the same way.
 - In-memory adapter: the same rule, by comparing versions.
 - `ConflictError` is an `ApplicationError` → HTTP `409` with the usual envelope. The client
   reloads and retries; the CLI prints the error and exits 1.
-- `tests/integration/test_tournament_repository_contract.py` runs the **same** tests against
+- `tests/tournaments/test_repository_contract.py` runs the **same** tests against
   both adapters, including two independent readers racing on one row.
 
 ## What this does and does not guarantee

@@ -1,7 +1,7 @@
 """The HTTP error contract that holds for any feature (see shared/http/errors.py).
 
-Example-specific rows (resource 404, Pydantic vs domain 422) live in
-``test_tournament_errors.py`` and are removed with the example.
+Rows that need a feature (resource 404, Pydantic vs domain 422) are tested on the
+example feature; yours will have its own.
 """
 
 import logging

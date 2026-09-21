@@ -57,9 +57,9 @@ fails the build when one stops being true. The list lives in [`proofs.toml`](pro
 | `proof:optimistic-concurrency` | two readers race on one row: the stale write raises `ConflictError`, HTTP says 409 | `tests/integration`, `tests/api` |
 | `proof:transaction-boundary` | commit before the response is sent; failed commit → 500, nothing persisted | `tests/api` |
 | `proof:events-after-commit` | handlers run after commit and see committed rows; rollback dispatches nothing | `tests/api`, `tests/cli` |
-| `proof:authorization-in-application` | who may act is decided on an `Actor` in use cases, testable without HTTP | `tests/application`, `tests/api` |
+| `proof:authorization-in-application` | who may act is decided on an `Actor` in use cases, testable without HTTP | `tests/tournaments`, `tests/api` |
 | `proof:error-contract` | one error envelope for 404/405/500, request id on every response | `tests/api` |
-| `proof:example-removal` | `init_project.py --remove-example` leaves a project that lints, tests, migrates and serves | `tests/scripts` |
+| `proof:example-removal` | `init_project.py --remove-example` leaves a project that lints, tests, migrates and serves | `tests/template` |
 
 **What this is not.** It is not a proof that the architecture is *correct*, complete or
 suited to your problem, and it does not cover what your own code will do. It is the list of
@@ -205,14 +205,18 @@ class StartTournament:
 ## Make it yours
 
 ```bash
-uv run python scripts/init_project.py --name shopapi --remove-example   # rename + drop the example
-uv run python scripts/new_feature.py orders                             # scaffold a feature
+uv run python scripts/init_project.py --name shopapi --remove-example   # your package, no example,
+                                                                        # no template-only checks
+make check                                                              # green
+uv run python scripts/new_feature.py orders                             # a wired, tested feature
 make check                                                              # still green
 ```
 
-`new_feature.py` generates a working vertical slice - entity, event, repository port, two use
-cases, in-memory adapter, router - that already passes the architecture tests. Wire two
-lines in `bootstrap/app.py` and `POST /api/v1/orders` works.
+`init_project.py` leaves *your* project: the example, the proof system and this README are
+gone; the dependency rule stays as a tool in `make check`, and the mechanisms you inherit
+stay tested. `new_feature.py` generates a vertical slice - entity, event, port, use cases,
+in-memory adapter, router - wires it in `bootstrap/features/orders.py` and writes its first
+tests. This whole journey runs as a test on every push (`tests/template/test_user_journey.py`).
 
 ## Design decisions
 
@@ -233,7 +237,8 @@ lines in `bootstrap/app.py` and `POST /api/v1/orders` works.
 
 | | |
 |---|---|
-| `make proof` | the executable architecture guarantees, one verdict each (~20 s) |
+| `make architecture` | the dependency rule as a tool (`scripts/archcheck.py check`), part of `make check` |
+| `make proof` | (template repository) the executable guarantees, one verdict each (~20 s) |
 | `make graph` | regenerate the dependency graph page from the code |
 | `make test` / `make test-fast` | full suite with coverage / domain + application + architecture only |
 | `make lint` / `make format` / `make typecheck` | Ruff, Ruff --fix, mypy --strict |

@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from tests.proofs.runner import main  # noqa: E402 - needs the path above
+from tests.template.proofs.runner import main  # noqa: E402 - needs the path above
 
 if __name__ == "__main__":
     sys.exit(main(ROOT, sys.argv[1:]))

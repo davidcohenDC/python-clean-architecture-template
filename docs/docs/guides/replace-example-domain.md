@@ -4,49 +4,49 @@ title: Replace the example domain
 sidebar_position: 2
 ---
 
-# Replace the example domain
-
-The example lives in `src/cleanarch/tournaments/` plus three small blocks marked
-`# >>> example: tournaments` / `# <<< example: tournaments` in `bootstrap/app.py`,
-`alembic/env.py` and `tests/conftest.py`, plus its tests and one migration.
-
-## The one-command way
+# Make it your project
 
 ```bash
 uv run python scripts/init_project.py --name shopapi --remove-example
 ```
 
-- `--name shopapi` renames the package everywhere (`src/shopapi/`, imports, `pyproject.toml`,
-  `Makefile`, `Dockerfile`, docs, workflows). Pick a valid lowercase identifier.
-- `--remove-example` deletes the tournaments feature, its tests, its migration and the marked
-  blocks, then runs `ruff` to tidy up.
+One command, run once after cloning. It:
+
+- renames the package (`src/shopapi/`, imports, `pyproject.toml`, `app_name`, Makefile,
+  Dockerfile, docs, workflows) - pick a valid lowercase identifier;
+- removes the example: `src/shopapi/tournaments/`, `bootstrap/features/tournaments.py` (and
+  its entry in `FEATURES`), `tests/tournaments/`, its migrations (the chain starts empty);
+- removes what only the template needs: `tests/template/` (self-checks, the proof system,
+  this very journey), `proofs.toml`, `make proof`, the template README;
+- writes a short README for *your* project and regenerates the dependency graph.
 
 Then:
 
 ```bash
-git diff --stat                      # review
-make check                           # architecture tests still green
-uv run python scripts/new_feature.py orders
+make check                                   # green: lint, types, architecture, tests
+uv run python scripts/new_feature.py orders  # your first feature, wired and tested
+make run-memory                              # POST /api/v1/orders
 ```
 
-Both flags are optional and independent. Running `--name` alone keeps the example under the
-new package name, which is useful while you study it.
+Both flags are optional. `--name` alone keeps the example under the new package name,
+useful while you study it; the template-only checks are removed either way.
 
-## The manual way
+## What stays, and why
 
-1. `rm -rf src/cleanarch/tournaments`
-2. Remove the three marked blocks (`grep -rn "example: tournaments"`).
-3. Delete `tests/domain/test_{phases,progress,tournament}.py`,
-   `tests/application/test_use_cases.py`, `tests/integration/test_sqlalchemy_repository.py`,
-   `tests/api/` contents, and `alembic/versions/20260919_0001_create_tournaments.py`.
-4. `make check`.
+| Kept | Because |
+|---|---|
+| `shared/`, `bootstrap/` | the building blocks and the composition root: your code now |
+| `scripts/archcheck.py` in `make check` and CI | the dependency rule is a durable guardrail, and a tool rather than a test so it does not dictate how you test |
+| `tests/http`, `tests/bootstrap`, `tests/architecture` | the inherited mechanisms are covered without the example; delete or move them freely |
+| `scripts/new_feature.py`, `scripts/graph.py` | the scaffold and the graph keep working in your project |
+| `docs/` | the architecture docs and ADRs, for you to keep or replace |
 
-## What stays
+## What does not stay, and why
 
-Everything under `shared/`, `bootstrap/`, the test layout, the tooling and the docs. That is
-the template. `git log` on those paths shows they never mention tournaments.
+- The example's tests and its migrations: they described a domain you do not have.
+- `make proof` and `proofs.toml`: the *template's* way of proving its own claims. Your
+  guarantees are your tests; the template does not impose a registry, a marker or a
+  documentation contract on you.
 
-## Keep the example around?
-
-You can. It costs nothing at runtime, and it is a working reference for "how do I..." while
-you build your first feature. Delete it when your own feature covers the same ground.
+This journey - init, green, first feature, green, served - runs as a test in the template
+repository on every push (`tests/template/test_user_journey.py`).

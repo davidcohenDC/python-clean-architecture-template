@@ -31,7 +31,7 @@ request**.
 
 Why a middleware and not a `yield` dependency? Since FastAPI 0.118 the exit code of a
 `yield` dependency runs *after* the response has been sent. A commit there can fail while
-the client already holds a `201`. We hit exactly that in review; `tests/api/test_transaction.py`
+the client already holds a `201`. We hit exactly that in review; `tests/tournaments/test_transaction.py`
 now proves a failed commit is a `500` and persists nothing.
 
 ## Consequences
@@ -56,4 +56,4 @@ Introduce a `UnitOfWork` port ([recipe](../guides/extending#unit-of-work)) when:
 ## Proof
 
 - proof:transaction-boundary - commit happens before the response is sent, a domain error
-  rolls back, a failed commit is a `500` and persists nothing (`tests/api/test_transaction.py`).
+  rolls back, a failed commit is a `500` and persists nothing (`tests/tournaments/test_transaction.py`).

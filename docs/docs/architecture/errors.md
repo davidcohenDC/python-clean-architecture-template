@@ -44,7 +44,8 @@ for that reason.
 
 `TournamentNotFound(NotFoundError)` is raised by use cases, never by the domain: the domain
 does not know that ids can be looked up. `ForbiddenError` (the actor may not do this) maps
-to 403. Other `ApplicationError`s (a conflict, for instance) map to 409 by default.
+to 403. `ConflictError` (a stale write, see [ADR-010](../decisions/010-optimistic-concurrency))
+maps to 409, as does any other `ApplicationError` by default.
 
 Authentication failures are different: they happen *before* any use case runs, in the HTTP
 adapter (`shared/http/auth.py`), as `HTTPException(401)`. The handler in `errors.py` wraps

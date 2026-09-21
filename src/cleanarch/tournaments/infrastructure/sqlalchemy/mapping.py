@@ -46,6 +46,7 @@ def to_model(tournament: Tournament) -> TournamentModel:
         round_index=tournament.progress.round_index,
         organizer_id=tournament.organizer_id,
         created_at=tournament.created_at,
+        version=0,
     )
 
 
@@ -69,6 +70,7 @@ def to_domain(model: TournamentModel) -> Tournament:
         phases=Phases.of(*(phase_from_json(p) for p in model.phases)),
         organizer_id=model.organizer_id,
         created_at=_aware(model.created_at),
+        version=model.version,
         progress=Progress(
             status=TournamentStatus(model.status),
             phase_index=model.phase_index,

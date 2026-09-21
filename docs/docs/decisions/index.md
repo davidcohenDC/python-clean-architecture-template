@@ -20,6 +20,7 @@ consequences, and - for patterns we left out - the condition under which you sho
 | [007](./007-validation-placement.md) | Shape in Pydantic, rules in the domain | The domain must hold on every entry path |
 | [008](./008-persistence-model.md) | Separate row model + explicit mapping | Frozen dataclass domain, table free to evolve |
 | [009](./009-authentication-as-adapter.md) | Authentication is an adapter, authorization a rule | API key → `Actor`; use cases decide, domain records `organizer_id` |
+| [010](./010-optimistic-concurrency.md) | Optimistic concurrency on aggregates | `version` checked on `save`; stale write → `ConflictError` → 409, on both adapters |
 
 Format: [Michael Nygard's ADR](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions).
 Add a new one with the next number when you change a decision in your fork; keep the old

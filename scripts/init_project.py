@@ -48,7 +48,7 @@ EXAMPLE_PATHS = [
     "tests/domain/test_progress.py",
     "tests/domain/test_tournament.py",
     "tests/application/test_use_cases.py",
-    "tests/integration/test_sqlalchemy_repository.py",
+    "tests/integration/test_tournament_repository_contract.py",
     "tests/api/test_auth.py",
     "tests/api/test_tournaments_api.py",
     "tests/api/test_transaction.py",

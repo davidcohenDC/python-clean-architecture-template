@@ -55,7 +55,8 @@ class TestStartTournament:
         started = await StartTournament(repository, events).execute(TournamentId("t-1"), ALICE)
 
         assert started.status is TournamentStatus.IN_PROGRESS
-        assert (await repository.get(TournamentId("t-1"))).status is TournamentStatus.IN_PROGRESS
+        assert started.version == 1, "use cases return what the repository stored"
+        assert await repository.get(TournamentId("t-1")) == started
         assert events.events == [TournamentStarted("t-1")]
 
     async def test_unknown_id_raises_not_found(self, repository, events):

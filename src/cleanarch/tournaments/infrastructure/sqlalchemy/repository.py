@@ -2,7 +2,9 @@ from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.exc import StaleDataError
 
+from cleanarch.shared.application.errors import ConflictError
 from cleanarch.tournaments.domain import Tournament, TournamentId
 from cleanarch.tournaments.infrastructure.sqlalchemy.mapping import (
     to_domain,
@@ -31,12 +33,20 @@ class SqlAlchemyTournamentRepository:
         model = await self._session.get(TournamentModel, tournament_id)
         return None if model is None else to_domain(model)
 
-    async def save(self, tournament: Tournament) -> None:
+    async def save(self, tournament: Tournament) -> Tournament:
         model = await self._session.get(TournamentModel, tournament.id)
-        if model is None:  # pragma: no cover - defensive; use cases load before saving
+        if model is None:
             raise LookupError(f"Tournament {tournament.id} does not exist")
+        if model.version != tournament.version:
+            # The aggregate was loaded from an older version than the row in this session.
+            raise ConflictError(f"Tournament '{tournament.id}' was modified concurrently.")
         update_model(model, tournament)
-        await self._session.flush()
+        try:
+            await self._session.flush()  # UPDATE ... WHERE version = ?; bumps version
+        except StaleDataError as exc:
+            # Another session committed a newer version between our load and our write.
+            raise ConflictError(f"Tournament '{tournament.id}' was modified concurrently.") from exc
+        return to_domain(model)
 
     async def list(self, *, limit: int, offset: int) -> Sequence[Tournament]:
         statement = (

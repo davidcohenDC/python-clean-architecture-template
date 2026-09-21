@@ -103,7 +103,8 @@ make migration m="create orders"   # autogenerate
 make migrate
 ```
 
-Write `tests/integration/test_order_repository.py` (copy the tournament one).
+Copy `tests/integration/test_tournament_repository_contract.py`: the same tests must pass on
+your in-memory and SQL adapters, including the stale-write conflict (ADR-010).
 
 ### 4. HTTP - parse, execute, present
 

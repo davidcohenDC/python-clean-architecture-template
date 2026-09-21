@@ -56,7 +56,7 @@ src/cleanarch/
 tests/
 ├── domain/          pure, no I/O                      ~40 tests, milliseconds
 ├── application/     use cases + in-memory adapters
-├── integration/     SQLAlchemy adapter on SQLite (or Postgres via TEST_DATABASE_URL)
+├── integration/     repository contract on in-memory + SQLite (or Postgres via TEST_DATABASE_URL)
 ├── api/             HTTP boundary with in-memory adapters (+ ops, auth, transaction on SQLite)
 ├── cli/             the command line on a SQLite file
 └── architecture/    the Dependency Rule, executable

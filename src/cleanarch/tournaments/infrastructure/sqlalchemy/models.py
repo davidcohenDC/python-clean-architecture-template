@@ -27,3 +27,14 @@ class TournamentModel(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True
     )
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Optimistic concurrency: every UPDATE is emitted as
+    # ``UPDATE ... WHERE id = ? AND version = ?`` and bumps ``version``; if the row
+    # changed under us SQLAlchemy raises StaleDataError, which the repository turns
+    # into ConflictError. Works on every backend, no locks held between requests.
+    # New rows start at 0 (SQLAlchemy's default would be 1) to match the in-memory adapter.
+    __mapper_args__ = {  # noqa: RUF012 - SQLAlchemy declarative API
+        "version_id_col": version,
+        "version_id_generator": lambda current: 0 if current is None else current + 1,
+    }

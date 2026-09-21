@@ -4,6 +4,7 @@ Mapping rules (from most to least specific):
 
 * ``NotFoundError``        → 404
 * ``ForbiddenError``       → 403
+* ``ConflictError``        → 409  (stale write, optimistic concurrency)
 * ``ApplicationError``     → 409  (the request is well-formed but cannot be fulfilled)
 * ``DomainError``          → 422  (the request violates a business rule)
 * ``HTTPException``        → its own status, same envelope (401 from auth, for instance)
@@ -18,7 +19,12 @@ import logging
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
-from cleanarch.shared.application.errors import ApplicationError, ForbiddenError, NotFoundError
+from cleanarch.shared.application.errors import (
+    ApplicationError,
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+)
 from cleanarch.shared.domain.errors import DomainError
 from cleanarch.shared.http.schemas import ErrorResponse
 
@@ -40,6 +46,7 @@ def register_error(app: FastAPI, exc_type: type[Exception], status_code: int) ->
 def register_error_handlers(app: FastAPI) -> None:
     register_error(app, NotFoundError, status.HTTP_404_NOT_FOUND)
     register_error(app, ForbiddenError, status.HTTP_403_FORBIDDEN)
+    register_error(app, ConflictError, status.HTTP_409_CONFLICT)
     register_error(app, ApplicationError, status.HTTP_409_CONFLICT)
     register_error(app, DomainError, status.HTTP_422_UNPROCESSABLE_CONTENT)
 

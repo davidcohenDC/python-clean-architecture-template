@@ -92,3 +92,32 @@ async def test_malformed_payload_is_rejected_by_pydantic(client):
     response = await client.post(BASE, json={"name": "x", "phases": "nope", "extra": 1})
     assert response.status_code == 422
     assert "detail" in response.json()  # FastAPI's native validation envelope
+
+
+async def test_concurrent_modification_maps_to_409(client: AsyncClient):
+    """Two clients act on the same state: the second write is refused, not lost."""
+    from cleanarch.shared.application.errors import ConflictError
+    from cleanarch.tournaments.http import get_tournament_repository
+
+    created = await create(client)
+    app = client._transport.app  # type: ignore[attr-defined]
+    real = app.dependency_overrides[get_tournament_repository]
+
+    class StaleRepository:
+        def __init__(self, inner):
+            self._inner = inner
+
+        def __getattr__(self, name):
+            return getattr(self._inner, name)
+
+        async def save(self, tournament):
+            raise ConflictError("Tournament was modified concurrently.")
+
+    app.dependency_overrides[get_tournament_repository] = lambda: StaleRepository(real())
+    try:
+        response = await client.post(f"{BASE}/{created['id']}/start")
+    finally:
+        app.dependency_overrides[get_tournament_repository] = real
+
+    assert response.status_code == 409
+    assert response.json()["error"] == "ConflictError"

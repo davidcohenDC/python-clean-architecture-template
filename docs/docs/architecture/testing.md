@@ -12,7 +12,7 @@ The test suite mirrors the rings. Each folder answers one question, with one set
 |---|---|---|---|
 | `tests/domain` | Are the business rules right? | nothing | ms |
 | `tests/application` | Do use cases orchestrate correctly? | in-memory adapter, recording publisher | ms |
-| `tests/integration` | Does the SQL adapter round-trip the aggregate? | SQLite (or PostgreSQL) | ~100 ms |
+| `tests/integration` | Do both adapters honour the repository contract, including concurrency? | SQLite (or PostgreSQL) + in-memory | ~100 ms |
 | `tests/api` | Is the HTTP contract right, are errors mapped? | full app, in-memory adapters | ~10 ms |
 | `tests/architecture` | Does the code still respect the Dependency Rule? | the source tree | ms |
 
@@ -56,18 +56,16 @@ async def test_domain_error_leaves_state_and_events_untouched(repository, events
 No `unittest.mock`, no patching. If a use case is hard to test this way, its dependencies
 are probably not going through ports.
 
-## Integration tests
+## Integration tests: one contract, every adapter
 
-Only the adapter is under test. A fresh schema is created per test on SQLite in-memory;
-set `TEST_DATABASE_URL` to run the same file against PostgreSQL (CI does).
+`test_tournament_repository_contract.py` is parametrised over the in-memory and the
+SQLAlchemy repository and runs the *same* tests on both: round trip through a fresh reader,
+`save` returning the stored state, pagination, and the optimistic-concurrency guarantee -
+two independent readers load one row, the first saves, the second must get `ConflictError`
+and the final version must be exactly 1. A fresh schema is created per test on SQLite
+in-memory; set `TEST_DATABASE_URL` to run the SQL half against PostgreSQL (CI does).
 
-```python
-await repository.add(tournament); await session.commit(); session.expunge_all()
-assert await repository.get(TournamentId("t-1")) == tournament
-```
-
-The `expunge_all()` is the point: it forces a real re-read so the mapping is tested, not the
-identity map.
+If you add a third adapter, add it to the fixture's `params` and you are done.
 
 ## API tests
 

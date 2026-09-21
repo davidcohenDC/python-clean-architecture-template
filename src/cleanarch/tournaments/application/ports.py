@@ -19,8 +19,13 @@ class TournamentRepository(Protocol):
 
     async def get(self, tournament_id: TournamentId) -> Tournament | None: ...
 
-    async def save(self, tournament: Tournament) -> None:
-        """Persist the new state of an existing tournament."""
+    async def save(self, tournament: Tournament) -> Tournament:
+        """Persist the new state of an existing tournament and return what is now stored.
+
+        Optimistic concurrency: ``tournament.version`` must match the stored version,
+        otherwise ``ConflictError`` is raised and nothing is written. The returned
+        aggregate carries the new version.
+        """
         ...
 
     async def list(self, *, limit: int, offset: int) -> Sequence[Tournament]: ...

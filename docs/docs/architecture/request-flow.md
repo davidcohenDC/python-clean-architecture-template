@@ -83,6 +83,7 @@ sequenceDiagram
 | domain | `DomainError` subclass | `422` `{"error": "TournamentAlreadyStarted", "message": ...}` |
 | application | `NotFoundError` subclass | `404` `{"error": "TournamentNotFound", ...}` |
 | application | `ForbiddenError` | `403` (only the organizer or an admin runs a tournament) |
+| repository | `ConflictError` | `409` (someone else saved a newer version first; reload and retry) |
 | http adapter | `HTTPException(401)` | `401` from `shared/http/auth.py` when `API_KEYS` is set |
 | application | other `ApplicationError` | `409` |
 | anywhere | anything else | `500`, logged with traceback, generic message |

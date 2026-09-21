@@ -46,9 +46,9 @@ class StartTournament:
         tournament = await _require(self._repository, tournament_id)
         _authorize(actor, tournament)
         result = tournament.start()
-        await self._repository.save(result.aggregate)
+        saved = await self._repository.save(result.aggregate)
         await self._events.publish(result.events)
-        return result.aggregate
+        return saved
 
 
 class AdvanceTournament:
@@ -60,9 +60,9 @@ class AdvanceTournament:
         tournament = await _require(self._repository, tournament_id)
         _authorize(actor, tournament)
         result = tournament.advance()
-        await self._repository.save(result.aggregate)
+        saved = await self._repository.save(result.aggregate)
         await self._events.publish(result.events)
-        return result.aggregate
+        return saved
 
 
 class GetTournament:

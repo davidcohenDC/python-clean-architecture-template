@@ -33,6 +33,9 @@ class Tournament:
     organizer_id: str
     created_at: datetime
     progress: Progress = field(default_factory=Progress)
+    version: int = 0
+    """Persistence version for optimistic concurrency: set by the repository on load,
+    checked and bumped on ``save``. The domain never touches it."""
 
     def __post_init__(self) -> None:
         if not self.name.strip() or len(self.name) > MAX_NAME_LENGTH:

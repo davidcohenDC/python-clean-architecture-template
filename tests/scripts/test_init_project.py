@@ -49,7 +49,8 @@ def stripped_project(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, di
         "DATABASE_URL": f"sqlite+aiosqlite:///{target / 'fresh.db'}",
         "PYTHONDONTWRITEBYTECODE": "1",
     }
-    env.pop("API_KEYS", None)
+    for leaked in ("API_KEYS", "PYTEST_ADDOPTS", "PYTEST_CURRENT_TEST"):
+        env.pop(leaked, None)
     result = run(
         sys.executable,
         "scripts/init_project.py",
@@ -87,6 +88,7 @@ def test_stripped_project_lints_and_passes_the_architecture_tests(stripped_proje
         "-q",
         "-p",
         "no:cacheprovider",
+        f"--basetemp={target / '.pytest-tmp'}",
         cwd=target,
         env=env,
     )

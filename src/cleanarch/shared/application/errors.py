@@ -23,3 +23,13 @@ class ForbiddenError(ApplicationError):
     """The actor is authenticated but not allowed to do this."""
 
     message = "Not allowed."
+
+
+class ConflictError(ApplicationError):
+    """The change was based on stale state: someone else modified it first.
+
+    Raised by repositories on ``save`` (optimistic concurrency, see ADR-010).
+    The client should reload and retry.
+    """
+
+    message = "The resource was modified concurrently; reload and retry."

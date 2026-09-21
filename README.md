@@ -130,7 +130,7 @@ src/cleanarch/
 tests/
 ├── domain/           pure rules, no I/O                          ms
 ├── application/      use cases with the in-memory adapter        ms
-├── integration/      SQLAlchemy adapter on SQLite / PostgreSQL   ~100 ms
+├── integration/      repository contract: in-memory + SQL      ~100 ms
 ├── api/              HTTP boundary, auth, ops, HTTP→DB on SQLite   ms
 ├── cli/              command line on a SQLite file              ms
 └── architecture/     the Dependency Rule, executable             ms
@@ -206,6 +206,7 @@ lines in `bootstrap/app.py` and `POST /api/v1/orders` works.
 | Shape in Pydantic, rules in the domain | one source of truth per rule, on every entry path | - | [007](docs/docs/decisions/007-validation-placement.md) |
 | Separate row model + explicit mapping | frozen dataclass domain; table evolves independently | - | [008](docs/docs/decisions/008-persistence-model.md) |
 | Auth is an adapter, authorization a rule | API key → `Actor`; use cases decide; domain records `organizer_id` | JWT/OAuth: swap one file | [009](docs/docs/decisions/009-authentication-as-adapter.md) |
+| Optimistic concurrency on every adapter | `version` checked on `save`; stale write → `409`, never a lost update | - | [010](docs/docs/decisions/010-optimistic-concurrency.md) |
 
 ## Tooling
 

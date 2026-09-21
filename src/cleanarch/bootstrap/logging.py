@@ -17,7 +17,8 @@ LogFormat = Literal["text", "json"]
 
 class RequestIdFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        record.request_id = current_request_id() or "-"
+        if not hasattr(record, "request_id"):  # ``extra={"request_id": ...}`` wins
+            record.request_id = current_request_id() or "-"
         return True
 
 
@@ -36,7 +37,13 @@ class JsonFormatter(logging.Formatter):
 
 
 def configure_logging(level: str = "INFO", fmt: LogFormat = "text") -> None:
+    """Install (or replace) the template's handler on the root logger.
+
+    Only our own previous handler is removed: handlers installed by the host
+    (pytest's capture, a process manager, an APM agent) are left alone.
+    """
     handler = logging.StreamHandler(sys.stderr)
+    handler.set_name("cleanarch")
     handler.addFilter(RequestIdFilter())
     if fmt == "json":
         handler.setFormatter(JsonFormatter())
@@ -45,7 +52,7 @@ def configure_logging(level: str = "INFO", fmt: LogFormat = "text") -> None:
             logging.Formatter("%(asctime)s %(levelname)-5s [%(request_id)s] %(name)s: %(message)s")
         )
     root = logging.getLogger()
-    root.handlers[:] = [handler]
+    root.handlers[:] = [h for h in root.handlers if h.get_name() != "cleanarch"] + [handler]
     root.setLevel(level.upper())
     # uvicorn installs its own handlers; route them through ours for one consistent format.
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):

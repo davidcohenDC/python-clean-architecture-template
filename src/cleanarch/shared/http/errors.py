@@ -7,8 +7,14 @@ Mapping rules (from most to least specific):
 * ``ConflictError``        → 409  (stale write, optimistic concurrency)
 * ``ApplicationError``     → 409  (the request is well-formed but cannot be fulfilled)
 * ``DomainError``          → 422  (the request violates a business rule)
-* ``HTTPException``        → its own status, same envelope (401 from auth, for instance)
-* anything else            → 500, logged
+* ``HTTPException``        → its own status, same envelope: 401 from auth, 404 for an
+                             unknown route, 405 with its ``Allow`` header
+* anything else            → 500, logged with the request id, which is also echoed in
+                             the response header
+
+One deliberate exception: Pydantic's request validation keeps FastAPI's native
+``{"detail": [...]}`` body. Clients and tooling already understand that format,
+and it carries field locations the envelope does not.
 
 Features may register their own, more specific mapping with
 ``register_error(app, ExcType, status)`` if 422/409 is not right for them.
@@ -16,8 +22,9 @@ Features may register their own, more specific mapping with
 
 import logging
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException
 
 from cleanarch.shared.application.errors import (
     ApplicationError,
@@ -26,6 +33,7 @@ from cleanarch.shared.application.errors import (
     NotFoundError,
 )
 from cleanarch.shared.domain.errors import DomainError
+from cleanarch.shared.http.request_id import REQUEST_ID_HEADER
 from cleanarch.shared.http.schemas import ErrorResponse
 
 logger = logging.getLogger(__name__)
@@ -60,9 +68,13 @@ def register_error_handlers(app: FastAPI) -> None:
 
     app.add_exception_handler(HTTPException, http_exception)
 
-    async def unexpected(_: Request, exc: Exception) -> JSONResponse:
-        logger.exception("unhandled error", exc_info=exc)
+    async def unexpected(request: Request, exc: Exception) -> JSONResponse:
+        # Runs in Starlette's outermost ServerErrorMiddleware, outside RequestIdMiddleware:
+        # the id is taken from the scope state it left behind and echoed by hand.
+        request_id = getattr(request.state, "request_id", None)
+        logger.exception("unhandled error", exc_info=exc, extra={"request_id": request_id or "-"})
         body = ErrorResponse(error="InternalServerError", message="Unexpected error.")
-        return JSONResponse(status_code=500, content=body.model_dump())
+        headers = {REQUEST_ID_HEADER: request_id} if request_id else None
+        return JSONResponse(status_code=500, content=body.model_dump(), headers=headers)
 
     app.add_exception_handler(Exception, unexpected)

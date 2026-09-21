@@ -35,6 +35,8 @@ class RequestIdMiddleware:
         incoming = dict(scope["headers"]).get(REQUEST_ID_HEADER.encode(), b"").decode("latin-1")
         request_id = incoming if _VALID.match(incoming) else uuid.uuid4().hex
         token = request_id_var.set(request_id)
+        # Also on the scope: the 500 handler runs outside this middleware and needs it.
+        scope.setdefault("state", {})["request_id"] = request_id
 
         async def send_with_id(message: Message) -> None:
             if message["type"] == "http.response.start":

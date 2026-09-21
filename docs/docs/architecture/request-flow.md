@@ -90,6 +90,7 @@ sequenceDiagram
 | repository | `ConflictError` | `409` (someone else saved a newer version first; reload and retry) |
 | http adapter | `HTTPException(401)` | `401` from `shared/http/auth.py` when `API_KEYS` is set |
 | application | other `ApplicationError` | `409` |
-| anywhere | anything else | `500`, logged with traceback, generic message |
+| framework | unknown route / wrong method | `404` / `405` in the envelope (405 keeps `Allow`) |
+| anywhere | anything else | `500` in the envelope, logged with traceback and request id |
 
 See [Errors](errors) for the reasoning.

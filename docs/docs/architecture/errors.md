@@ -58,7 +58,13 @@ them in the same envelope and keeps the `WWW-Authenticate` header.
 - Infrastructure exceptions (`sqlalchemy.exc.*`, connection errors) are not translated: they
   are bugs or outages, they become a logged 500, and the transaction rolls back.
 - Pydantic validation errors stay FastAPI's native 422 with a `detail` list, because clients
-  and tooling already understand that format.
+  and tooling already understand that format and it carries field locations.
+- Everything else that FastAPI/Starlette raise on their own - unknown route (404), wrong
+  method (405, with its `Allow` header) - is rendered in the envelope too.
+- An unexpected exception is a `500` in the envelope, with the request id both in the
+  response header and on the log line, so the two can be matched.
+
+`tests/api/test_errors.py` pins every row of this contract.
 
 ## Validation: shape vs rules
 

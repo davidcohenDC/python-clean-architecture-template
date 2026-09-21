@@ -79,14 +79,22 @@ commit is a `500` with nothing persisted - the guarantee of ADR-004.
 
 ## Architecture tests
 
-`tests/architecture/test_dependency_rule.py` walks `src/cleanarch` with `ast`, no imports
-executed, and checks three things for every module:
+`tests/architecture/dependency_rule.py` is a ~170-line checker: it walks a package with
+`ast`, no imports executed, and reports every violation of four rules:
 
-1. it imports only from its own ring or an inner one (`infrastructure` and `http` may not
-   import each other);
+1. a module imports only from its own ring or an inner one (`infrastructure`, `http` and
+   `cli` share a ring but may not import each other);
 2. `domain` and `application` import only the standard library and this package - no
-   `fastapi`, `pydantic`, `sqlalchemy`, `httpx`...;
-3. features never import other features, and `shared` never imports a feature.
+   `fastapi`, `pydantic`, `sqlalchemy`, `httpx`, nothing third-party;
+3. features never import other features, and `shared` never imports a feature;
+4. every module lives in a known ring (an unexpected folder is an error, not a free pass).
+
+It resolves relative imports, imports inside functions, imports under `TYPE_CHECKING`
+(type-only coupling is still coupling) and `from pkg.feature import layer`.
+
+`test_dependency_rule.py` runs it on `cleanarch`. `test_self_check.py` runs it on tiny
+synthetic packages, each with one deliberate violation, and asserts that every one is
+caught - the rule is falsifiable, not just present.
 
 The failure message says what to do:
 
@@ -96,5 +104,5 @@ cleanarch.tournaments.infrastructure.sqlalchemy (infrastructure):
 'infrastructure' is an outer ring. Invert the dependency with a port.
 ```
 
-It is deliberately hand-written (about 100 lines) rather than pulled from a library so that
-the rule is *readable* in the repository, and it runs in the pre-commit hook and in CI.
+It is deliberately hand-written rather than pulled from a library so that the rule is
+*readable* in the repository, and it runs in the pre-commit hook and in CI.

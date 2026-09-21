@@ -55,7 +55,7 @@ src/cleanarch/
 └── __main__.py                    python -m cleanarch
 
 tests/
-├── domain/          pure, no I/O                      ~40 tests, milliseconds
+├── domain/          pure, no I/O, milliseconds
 ├── application/     use cases + in-memory adapters
 ├── integration/     repository contract on in-memory + SQLite (or Postgres via TEST_DATABASE_URL)
 ├── api/             HTTP boundary with in-memory adapters (+ ops, auth, transaction on SQLite)

@@ -16,7 +16,9 @@ on:
         required: false
         default: 'false'
 
-# The most a called job may request; each job in build-and-deploy.yml narrows this down.
+# Granted to every job of the called workflow (jobs inherit; none declares its own, see
+# build-and-deploy.yml). On pull requests from Dependabot or forks GitHub caps the token to
+# read-only, which is fine: the jobs that write only run on pushes to main.
 permissions:
   contents: write
   packages: write

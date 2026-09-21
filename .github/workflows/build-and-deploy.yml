@@ -141,10 +141,9 @@ jobs:
       github.ref == 'refs/heads/main'
       && inputs.release == 'true'
       && !contains(github.event.head_commit.message, '[skip ci]')
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
+    # Permissions are inherited from the caller (dispatcher.yml). Declaring write
+    # permissions here would make every Dependabot/fork PR run fail at startup, since
+    # their token is read-only and a called job may not request more than it gets.
     outputs:
       has_released: ${{ env.HAS_RELEASED }}
       release_version: ${{ env.RELEASE_VERSION }}
@@ -185,8 +184,6 @@ jobs:
       - test
       - dry-website-build
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -217,13 +214,19 @@ jobs:
       IMAGE_NAME: ${{ github.repository }}
       RELEASE_VERSION: ${{ needs.release.outputs.release_version }}
       HAS_RELEASED: ${{ needs.release.outputs.has_released }}
-    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      packages: write
+    # Runs after `release` whether it released or was skipped, but never after a failed
+    # release: `latest` must not be built from a commit the release job rejected.
+    if: >-
+      always()
+      && github.event_name != 'pull_request'
+      && github.ref == 'refs/heads/main'
+      && needs.release.result != 'failure'
+      && needs.release.result != 'cancelled'
     steps:
-      - name: Checkout
+      - name: Checkout the released tag (or the pushed commit when nothing was released)
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.HAS_RELEASED == 'true' && format('v{0}', env.RELEASE_VERSION) || github.sha }}
       - uses: docker/setup-buildx-action@v3
       - name: Log in to the Container registry
         uses: docker/login-action@v3

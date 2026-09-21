@@ -21,6 +21,7 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, Request, Response, status
 from sqlalchemy import text
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cleanarch import __version__
@@ -86,6 +87,13 @@ def wire_tournaments(app: FastAPI, settings: Settings) -> None:
 # <<< example: tournaments
 
 
+def _redacted(database_url: str) -> str:
+    """The URL for logs: never the password."""
+    if database_url.startswith("memory://"):
+        return database_url
+    return make_url(database_url).render_as_string(hide_password=True)
+
+
 # -- application factory -----------------------------------------------------------
 
 
@@ -95,7 +103,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        logger.info("%s started (database=%s)", settings.app_name, settings.database_url)
+        logger.info("%s started (database=%s)", settings.app_name, _redacted(settings.database_url))
         yield
         if not settings.use_in_memory:
             await app.state.engine.dispose()

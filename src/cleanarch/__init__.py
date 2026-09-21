@@ -13,4 +13,4 @@ Each feature (and ``shared``) is split into the four Clean Architecture rings:
 point inward; ``tests/architecture`` fails the build if they don't.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

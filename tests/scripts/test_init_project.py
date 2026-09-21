@@ -1,8 +1,8 @@
 """The example-removal contract, executed for real on a temporary copy.
 
 ``scripts/init_project.py --name <pkg> --remove-example`` must leave a project that
-lints, type-checks at the import level, passes the architecture tests, migrates from
-an empty database and serves ``/health``. This test runs those steps end to end so
+lints, passes its own whole test suite, migrates from an empty database and serves
+``/health``. This test runs those steps end to end so
 the contract cannot silently rot when the example grows.
 """
 
@@ -76,7 +76,7 @@ def test_no_functional_reference_to_the_example_survives(stripped_project):
     assert list((target / "alembic" / "versions").glob("*.py")) == []
 
 
-def test_stripped_project_lints_and_passes_the_architecture_tests(stripped_project):
+def test_stripped_project_lints_and_its_whole_suite_passes(stripped_project):
     target, env = stripped_project
     lint = run(sys.executable, "-m", "ruff", "check", "src", "tests", cwd=target, env=env)
     assert lint.returncode == 0, lint.stdout
@@ -84,7 +84,8 @@ def test_stripped_project_lints_and_passes_the_architecture_tests(stripped_proje
         sys.executable,
         "-m",
         "pytest",
-        "tests/architecture",
+        "tests",
+        "--ignore=tests/scripts",  # this very test; it would recurse
         "-q",
         "-p",
         "no:cacheprovider",

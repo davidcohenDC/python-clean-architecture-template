@@ -50,6 +50,8 @@ EXAMPLE_PATHS = [
     "tests/application/test_use_cases.py",
     "tests/integration/test_tournament_repository_contract.py",
     "tests/api/test_auth.py",
+    "tests/api/test_events.py",
+    "tests/api/test_tournament_errors.py",
     "tests/api/test_tournaments_api.py",
     "tests/api/test_transaction.py",
     "tests/cli/test_cli.py",

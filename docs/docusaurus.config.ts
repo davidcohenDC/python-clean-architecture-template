@@ -57,7 +57,7 @@ const config: Config = {
           items: [
             { label: "Getting started", to: "/getting-started" },
             { label: "Architecture", to: "/architecture/overview" },
-            { label: "Replace the example domain", to: "/guides/replace-example-domain" },
+            { label: "Add a feature", to: "/guides/add-a-feature" },
           ],
         },
         {

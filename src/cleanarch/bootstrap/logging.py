@@ -37,7 +37,7 @@ class JsonFormatter(logging.Formatter):
 
 
 def configure_logging(level: str = "INFO", fmt: LogFormat = "text") -> None:
-    """Install (or replace) the template's handler on the root logger.
+    """Install (or replace) our handler on the root logger.
 
     Only our own previous handler is removed: handlers installed by the host
     (pytest's capture, a process manager, an APM agent) are left alone.

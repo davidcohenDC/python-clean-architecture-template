@@ -6,12 +6,16 @@ sidebar_position: 3
 
 # Project structure
 
-Two kinds of code live in `src/cleanarch/`: the **template** (reused by every feature) and
-the **example** (one feature you will delete). Both follow the same four rings.
+`shared/` and `bootstrap/` are reused by every feature; each feature is a package of its
+own. All of them follow the same four rings.
+<!-- >>> example-only -->
+The `tournaments` feature is the example that ships with the template: delete it with
+`scripts/init_project.py --remove-example` once you have read it.
+<!-- <<< example-only -->
 
 ```text
 src/cleanarch/
-├── shared/                        TEMPLATE - building blocks
+├── shared/                        building blocks every feature reuses
 │   ├── domain/        errors.py      DomainError
 │   │                  events.py      DomainEvent (base)
 │   │                  result.py      DomainResult[T] = new aggregate + events
@@ -44,7 +48,7 @@ src/cleanarch/
 │   │                  dependencies.py use-case factories, get_tournament_repository
 │   └── cli/           commands.py    the same use cases from the terminal
 │
-├── bootstrap/                     TEMPLATE - composition root
+├── bootstrap/                     composition root
 │   ├── settings.py                Settings (pydantic-settings)
 │   ├── logging.py                 text or JSON logs, request id on every line
 │   ├── transaction.py             TransactionMiddleware + EventDispatchMiddleware: commit, then events
@@ -59,7 +63,7 @@ src/cleanarch/
 
 tests/                         organise yours as you like; the template assumes only pytest
 ├── conftest.py                  client fixture, make_settings (no .env), fakes
-├── http/, bootstrap/            what you inherit, tested without any feature
+├── http/, bootstrap/, shared/   what you inherit, tested without any feature
 ├── architecture/                one-line pytest wrapper around scripts/archcheck.py
 ├── tournaments/                 EXAMPLE - one feature tested at every level
 └── template/                    TEMPLATE-ONLY - self-checks, proof system, user journey

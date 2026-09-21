@@ -7,8 +7,7 @@ A feature module may define any of these hooks (all optional):
     register_cli(subparsers)          add sub-commands to ``python -m <package>``
     run_cli(args, session, events)    execute one of them; return True if handled
 
-``scripts/new_feature.py`` generates the module and adds it to ``FEATURES``;
-``scripts/init_project.py --remove-example`` removes the example's.
+``scripts/new_feature.py`` generates the module and adds it to ``FEATURES``.
 """
 
 from types import ModuleType

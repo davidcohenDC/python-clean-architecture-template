@@ -251,8 +251,7 @@ def page(root: Path, package: str) -> str:  # the docs page written by scripts/g
         "# Dependency graph, generated from the code\n\n"
         "Every arrow below is a real `import` found by the same parser that enforces the\n"
         "[Dependency Rule](testing#architecture-a-tool-and-optionally-a-test) - not a\n"
-        "drawing of intent. Regenerate with `make graph`; in the template repository\n"
-        "`tests/template/test_graph.py` fails when this file is stale.\n\n"
+        "drawing of intent. Regenerate with `make graph`.\n\n"
         "```mermaid\n" + mermaid(root, package) + "```\n"
     )
 

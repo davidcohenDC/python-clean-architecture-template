@@ -264,7 +264,7 @@ from {pkg}.{f}.infrastructure.in_memory import InMemory{entity}Repository
 
 def wire_http(app: FastAPI, settings: Settings) -> None:
     # In-memory for now. Add a SQLAlchemy adapter and pick it when
-    # ``not settings.use_in_memory`` (see the template's example feature).
+    # ``not settings.use_in_memory`` (the template repository shows both).
     repository = InMemory{entity}Repository()
     app.dependency_overrides[get_{var}_repository] = lambda: repository
     app.include_router(router, prefix="/api/v1")

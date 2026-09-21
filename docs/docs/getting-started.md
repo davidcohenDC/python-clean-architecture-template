@@ -23,8 +23,8 @@ make install     # uv sync --all-extras && git config core.hooksPath .githooks
 make run         # alembic upgrade head && uvicorn cleanarch.main:app --reload
 ```
 
-Open [http://localhost:8000/docs](http://localhost:8000/docs). You get a SQLite file (`dev.db`) and five endpoints
-for the example feature.
+Open [http://localhost:8000/docs](http://localhost:8000/docs). You get a SQLite file (`dev.db`)
+and every feature's endpoints under `/api/v1`.
 
 No database at all? Use the in-memory adapters:
 
@@ -41,6 +41,7 @@ DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/app make run
 
 Or the whole thing in containers: `docker compose up`.
 
+<!-- >>> example-only -->
 ## Try the example API
 
 ```bash
@@ -68,6 +69,7 @@ uv run python -m cleanarch tournaments create "Spring Cup" --rounds 2 --top 8
 uv run python -m cleanarch tournaments list
 uv run python -m cleanarch tournaments start <id>
 ```
+<!-- <<< example-only -->
 
 Same use cases, same database, no HTTP: `tournaments/cli/` is a second driving adapter.
 
@@ -75,7 +77,7 @@ Same use cases, same database, no HTTP: `tournaments/cli/` is a second driving a
 
 ```bash
 make test        # whole suite with coverage
-make test-fast   # domain + application + architecture only (no I/O, < 1 s)
+make test-fast   # everything but the repository contract tests
 make lint        # ruff check + ruff format --check
 make typecheck   # mypy --strict
 make check       # all of the above - what CI runs
@@ -97,6 +99,7 @@ Everything is an environment variable with a default (see `.env.example` and
 | `ENVIRONMENT` | `development` | `development` / `test` / `production` |
 | `API_KEYS` | `{}` | JSON map key → `actor[:role,...]`; empty = open API, everyone is `anonymous` |
 
+<!-- >>> template-only -->
 ## Make it yours
 
 ```bash
@@ -105,3 +108,4 @@ uv run python scripts/new_feature.py orders
 ```
 
 See [Replace the example domain](guides/replace-example-domain).
+<!-- <<< template-only -->

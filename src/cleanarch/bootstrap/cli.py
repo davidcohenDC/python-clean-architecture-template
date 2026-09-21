@@ -30,7 +30,7 @@ from cleanarch.shared.infrastructure.events import CollectedEvents
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="cleanarch", description="Clean Architecture template CLI"
+        prog="cleanarch", description="Every feature adds its commands here."
     )
     parser.add_argument("--version", action="version", version=__version__)
     features = parser.add_subparsers(dest="feature")

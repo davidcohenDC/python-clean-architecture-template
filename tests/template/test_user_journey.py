@@ -22,6 +22,12 @@ COPIED = [
     "alembic",
     "scripts",
     "docs/docs",
+    "docs/docusaurus.config.ts",
+    "docs/sidebars.ts",
+    "package.json",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    ".env.example",
     ".github",
     ".githooks",
     "proofs.toml",
@@ -30,9 +36,20 @@ COPIED = [
     "release.config.mjs",
     "README.md",
     "Makefile",
+    "uv.lock",
     ".pre-commit-config.yaml",
 ]
 PY = sys.executable
+TEMPLATE_WORDS = (
+    "cleanarch",
+    "proof:",
+    "proofs.toml",
+    "make proof",
+    "mark.proof",
+    "template-only",
+    "example-only",
+)
+ATTRIBUTION = {"README.md", "CONTRIBUTING.md", "docs/docs/intro.md"}  # "built from ..." is fine
 
 
 def run(*args: str, cwd: Path, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
@@ -91,6 +108,22 @@ def test_init_leaves_nothing_of_the_example_or_of_the_template_checks(project):
         encoding="utf-8"
     )
     assert (target / "README.md").read_text(encoding="utf-8").startswith("# acme\n")
+
+
+def test_init_leaves_no_trace_of_the_template_repository(project):
+    target, _ = project
+    leaks: list[str] = []
+    for path in target.rglob("*"):
+        relative = path.relative_to(target).as_posix()
+        if not path.is_file() or "__pycache__" in relative or relative == "uv.lock":
+            continue
+        if path.suffix in (".db", ".pyc"):
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore").lower()
+        if "python-clean-architecture-template" in text and relative not in ATTRIBUTION:
+            leaks.append(f"{relative}: template repository")
+        leaks.extend(f"{relative}: {word}" for word in TEMPLATE_WORDS if word in text)
+    assert leaks == [], "\n".join(leaks)
 
 
 def test_a_fresh_project_is_green(project, tmp_path: Path):

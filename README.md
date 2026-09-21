@@ -240,7 +240,7 @@ tests. This whole journey runs as a test on every push (`tests/template/test_use
 | `make architecture` | the dependency rule as a tool (`scripts/archcheck.py check`), part of `make check` |
 | `make proof` | (template repository) the executable guarantees, one verdict each (~20 s) |
 | `make graph` | regenerate the dependency graph page from the code |
-| `make test` / `make test-fast` | full suite with coverage / domain + application + architecture only |
+| `make test` / `make test-fast` | full suite with coverage / without the repository contract tests |
 | `make lint` / `make format` / `make typecheck` | Ruff, Ruff --fix, mypy --strict |
 | `make migrate` / `make migration m="..."` | Alembic upgrade / autogenerate |
 | `make docs` | Docusaurus dev server |

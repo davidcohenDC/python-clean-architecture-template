@@ -8,8 +8,7 @@ sidebar_position: 6
 
 Every arrow below is a real `import` found by the same parser that enforces the
 [Dependency Rule](testing#architecture-a-tool-and-optionally-a-test) - not a
-drawing of intent. Regenerate with `make graph`; in the template repository
-`tests/template/test_graph.py` fails when this file is stale.
+drawing of intent. Regenerate with `make graph`.
 
 ```mermaid
 flowchart LR

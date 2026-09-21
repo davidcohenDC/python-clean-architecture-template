@@ -8,7 +8,7 @@ from cleanarch.shared.domain.events import DomainEvent
 class DomainResult[T]:
     """The outcome of a state-changing domain operation: new state + events.
 
-    Aggregates in this template are immutable, so a method such as
+    Aggregates here are immutable, so a method such as
     ``Order.submit()`` cannot mutate ``self`` and append to an internal
     event list. It returns a ``DomainResult`` instead::
 

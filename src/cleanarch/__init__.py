@@ -4,7 +4,7 @@ Package layout (see docs/ for the long version):
 
     cleanarch/
     ├── shared/        TEMPLATE  - building blocks every feature reuses
-    ├── <feature>/     one package per feature; the template ships one as an example
+    ├── <feature>/     one package per feature, same four rings each
     ├── bootstrap/     TEMPLATE  - composition root: settings + wiring
     └── main.py        TEMPLATE  - ASGI entrypoint
 

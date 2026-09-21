@@ -117,6 +117,7 @@ markers = [
     "api: HTTP boundary tests",
     "architecture: tests that enforce the Dependency Rule",
     "contract: end-to-end contracts run on a temporary copy of the project (slower)",
+    "proof(*ids): evidence for the executable architecture guarantee(s) in proofs.toml",
 ]
 
 [tool.coverage.run]

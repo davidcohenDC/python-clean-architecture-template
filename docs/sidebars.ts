@@ -5,6 +5,7 @@ const sidebars: SidebarsConfig = {
     "intro",
     "getting-started",
     "project-structure",
+    "proofs",
     {
       type: "category",
       label: "Architecture",
@@ -15,6 +16,7 @@ const sidebars: SidebarsConfig = {
         "architecture/ports-and-adapters",
         "architecture/errors",
         "architecture/testing",
+        "architecture/dependency-graph",
       ],
     },
     {

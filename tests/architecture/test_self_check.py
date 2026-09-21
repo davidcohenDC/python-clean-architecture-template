@@ -71,11 +71,12 @@ def violations_for(tmp_path: Path, extra: dict[str, str]) -> list[Violation]:
     return check(make_package(tmp_path, {**CLEAN, **extra}), "pkg")
 
 
+@pytest.mark.proof("dependency-rule", "feature-isolation")
 def test_a_clean_package_has_no_violations(tmp_path):
     assert check(make_package(tmp_path, CLEAN), "pkg") == []
 
 
-CASES = [
+RING_CASES = [
     (
         "domain imports infrastructure (absolute)",
         "orders/domain/rule.py",
@@ -141,18 +142,6 @@ CASES = [
         "wired together in bootstrap",
     ),
     (
-        "feature imports another feature",
-        "orders/application/service.py",
-        src("from pkg.billing.domain.invoice import Invoice"),
-        "cross-feature",
-    ),
-    (
-        "shared imports a feature",
-        "shared/application/helper.py",
-        src("from pkg.orders.domain import Order"),
-        "'shared' must not know about features",
-    ),
-    (
         "domain imports a framework",
         "orders/domain/rule.py",
         src("from pydantic import BaseModel"),
@@ -172,14 +161,44 @@ CASES = [
     ),
 ]
 
+ISOLATION_CASES = [
+    (
+        "feature imports another feature",
+        "orders/application/service.py",
+        src("from pkg.billing.domain.invoice import Invoice"),
+        "cross-feature",
+    ),
+    (
+        "shared imports a feature",
+        "shared/application/helper.py",
+        src("from pkg.orders.domain import Order"),
+        "'shared' must not know about features",
+    ),
+]
 
-@pytest.mark.parametrize(
-    ("description", "file", "source", "reason"), CASES, ids=[c[0] for c in CASES]
-)
-def test_each_deliberate_violation_is_caught(tmp_path, description, file, source, reason):
+
+def _assert_caught(tmp_path, description, file, source, reason):
     found = violations_for(tmp_path, {file: source})
     assert found, f"not caught: {description}"
     assert any(reason in v.reason for v in found), f"{description}: {[str(v) for v in found]}"
+
+
+@pytest.mark.proof("dependency-rule")
+@pytest.mark.parametrize(
+    ("description", "file", "source", "reason"), RING_CASES, ids=[c[0] for c in RING_CASES]
+)
+def test_each_ring_violation_is_caught(tmp_path, description, file, source, reason):
+    _assert_caught(tmp_path, description, file, source, reason)
+
+
+@pytest.mark.proof("feature-isolation")
+@pytest.mark.parametrize(
+    ("description", "file", "source", "reason"),
+    ISOLATION_CASES,
+    ids=[c[0] for c in ISOLATION_CASES],
+)
+def test_each_isolation_violation_is_caught(tmp_path, description, file, source, reason):
+    _assert_caught(tmp_path, description, file, source, reason)
 
 
 def test_stdlib_and_inner_rings_are_always_allowed(tmp_path):
@@ -197,6 +216,7 @@ def test_stdlib_and_inner_rings_are_always_allowed(tmp_path):
     assert violations_for(tmp_path, extra) == []
 
 
+@pytest.mark.proof("dependency-rule")
 def test_the_message_names_module_import_and_remedy(tmp_path):
     (found,) = violations_for(
         tmp_path, {"orders/domain/rule.py": src("from pkg.orders.http.router import router")}

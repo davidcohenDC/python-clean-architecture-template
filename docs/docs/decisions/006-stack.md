@@ -35,3 +35,8 @@ of the inner rings?
 - Everything above is replaceable from the outside in: HTTP framework in `http/` +
   `bootstrap/`, ORM in `infrastructure/` + `shared/infrastructure/`, tooling in `pyproject.toml`.
 - Python 3.12+ is required (PEP 695 generics, `StrEnum`, `Self`).
+
+## Proof
+
+No executable proof: a technology choice. What the inner rings may import is covered by
+proof:dependency-rule, not by this decision.

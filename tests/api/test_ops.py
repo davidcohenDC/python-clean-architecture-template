@@ -15,6 +15,7 @@ from tests.conftest import make_settings
 pytestmark = pytest.mark.api
 
 
+@pytest.mark.proof("error-contract")
 async def test_every_response_carries_a_request_id(client: AsyncClient):
     generated = await client.get("/health")
     echoed = await client.get("/health", headers={"X-Request-ID": "trace-123"})

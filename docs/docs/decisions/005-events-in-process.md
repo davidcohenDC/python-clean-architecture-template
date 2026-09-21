@@ -53,3 +53,9 @@ Add an outbox ([recipe](../guides/extending#background-jobs--outbox)) when a han
 
 The port does not change: an outbox-backed `EventPublisher` records the same events in a
 table inside the transaction, and a worker delivers them with retries.
+
+## Proof
+
+- proof:events-after-commit - handlers see committed state, rolled-back requests and
+  failed commits dispatch nothing, a failing handler does not change the response, the CLI
+  follows the same order (`tests/api/test_events.py`, `tests/cli/test_cli.py`).

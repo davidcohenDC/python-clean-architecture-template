@@ -20,7 +20,7 @@ from cleanarch.tournaments.infrastructure.in_memory import InMemoryTournamentRep
 from cleanarch.tournaments.infrastructure.sqlalchemy import SqlAlchemyTournamentRepository
 from tests.conftest import NOW, make_tournament
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.proof("repository-contract")]
 
 DATABASE_URL = os.environ.get("TEST_DATABASE_URL", "sqlite+aiosqlite://")
 
@@ -104,6 +104,7 @@ async def test_save_returns_the_stored_state_with_a_bumped_version(backend: Back
     assert await reloaded.get(TournamentId("t-1")) == saved
 
 
+@pytest.mark.proof("optimistic-concurrency")
 async def test_a_stale_write_never_overwrites_a_newer_one(backend: Backend):
     """Two independent readers load the same state; the second writer must fail."""
     setup, commit = await backend.open()
@@ -129,6 +130,7 @@ async def test_a_stale_write_never_overwrites_a_newer_one(backend: Backend):
     assert final.status is TournamentStatus.IN_PROGRESS
 
 
+@pytest.mark.proof("optimistic-concurrency")
 async def test_saving_from_a_version_that_was_already_superseded_is_a_conflict(backend):
     repo, commit = await backend.open()
     await repo.add(make_tournament(id="t-1"))

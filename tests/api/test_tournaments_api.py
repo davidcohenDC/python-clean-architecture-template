@@ -94,6 +94,7 @@ async def test_malformed_payload_is_rejected_by_pydantic(client):
     assert "detail" in response.json()  # FastAPI's native validation envelope
 
 
+@pytest.mark.proof("optimistic-concurrency")
 async def test_concurrent_modification_maps_to_409(client: AsyncClient):
     """Two clients act on the same state: the second write is refused, not lost."""
     from cleanarch.shared.application.errors import ConflictError

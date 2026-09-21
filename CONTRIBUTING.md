@@ -42,6 +42,14 @@ the last tag, bumps the version (`feat` → minor, `fix` → patch, `!` → majo
 `CHANGELOG.md`, `pyproject.toml` and `__version__`, tags `vX.Y.Z`, publishes a GitHub
 release and pushes the Docker image to GHCR. You never edit the version by hand.
 
+## Architectural guarantees
+
+If your change touches a property listed in `proofs.toml`, keep its evidence green
+(`make proof`) and its ADR's `## Proof` section true. A new guarantee needs a test marked
+`@pytest.mark.proof("<id>")`, a registry entry, the ADR reference and a README row - the
+registry check tells you what is missing. Do not add a guarantee without a test that would
+fail if it were false.
+
 ## Pull requests
 
 1. Open an issue first for anything bigger than a small fix, so we can agree on the approach.

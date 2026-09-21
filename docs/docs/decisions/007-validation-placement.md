@@ -39,3 +39,8 @@ schema - and a second entry path (import job, CLI, another service) silently ski
 If you need field-level error locations for rule violations in a form-heavy UI, have the
 domain raise errors that carry a `field` attribute and extend `shared/http/errors.py` to
 include it. Keep the rule in the domain.
+
+## Proof
+
+No executable proof: where validation *lives* is a convention. The rules themselves are
+covered by `tests/domain`; the HTTP mapping of both 422 flavours by `tests/api`.

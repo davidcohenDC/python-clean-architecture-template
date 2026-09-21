@@ -41,3 +41,8 @@ Split the two concerns along the rings:
   not in the use cases.
 - API keys in an environment variable are enough for a template and for internal services;
   a user-facing product needs a real identity provider - the split above is the same.
+
+## Proof
+
+- proof:authorization-in-application - the organizer rule is tested on use cases with fakes
+  (`tests/application`), and HTTP only maps 401/403 (`tests/api/test_auth.py`).

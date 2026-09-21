@@ -72,6 +72,7 @@ class TestStartTournament:
         assert events.events == []
 
 
+@pytest.mark.proof("authorization-in-application")
 class TestAuthorization:
     async def test_only_the_organizer_can_start(self, repository, events):
         await repository.add(make_tournament(id="t-1", organizer_id="alice"))

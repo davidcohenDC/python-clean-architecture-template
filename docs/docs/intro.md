@@ -30,7 +30,7 @@ This template takes the opposite stance:
 
 | Principle | How it shows up |
 |---|---|
-| **Boundaries are executable** | `tests/architecture` parses every module and fails the build if a dependency points outward or a framework leaks into `domain`/`application`. |
+| **Claims are executable** | `make proof` runs nine falsifiable guarantees - dependency rule, adapter contract, concurrency, transaction and event semantics, error contract, example removal - each traced to its ADR, and fails when one stops being true. See [Executable guarantees](proofs). |
 | **Every pattern has a reason** | Each decision has an ADR. Patterns we deliberately *left out* (DI container, mediator, UoW, outbox) have one too, with the moment you would add them. |
 | **Template and example are separated** | `shared/` and `bootstrap/` are the template. `tournaments/` is the example. `scripts/init_project.py --remove-example` deletes it; `scripts/new_feature.py` scaffolds yours. |
 | **Realistic but small example** | A tournament with phases, cuts and a start/advance state machine: real invariants, real events, still readable in five minutes. |
@@ -54,5 +54,6 @@ This template takes the opposite stance:
 ## Next
 
 - [Getting started](getting-started) - running in two minutes.
+- [Executable guarantees](proofs) - `make proof`, what it checks and what it does not.
 - [Architecture overview](architecture/overview) - the four rings and the Dependency Rule.
 - [Replace the example domain](guides/replace-example-domain) - make it yours.

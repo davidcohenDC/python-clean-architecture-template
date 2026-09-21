@@ -11,11 +11,15 @@ import pytest
 import cleanarch
 from tests.architecture.dependency_rule import check
 
-pytestmark = pytest.mark.architecture
+pytestmark = [
+    pytest.mark.architecture,
+    pytest.mark.proof("dependency-rule", "feature-isolation"),
+]
 
 ROOT = Path(cleanarch.__file__).parent
 
 
 def test_the_package_respects_the_dependency_rule():
+    """Evidence for proof:dependency-rule and proof:feature-isolation on the real package."""
     violations = check(ROOT, "cleanarch")
     assert violations == [], "\n" + "\n".join(str(v) for v in violations)

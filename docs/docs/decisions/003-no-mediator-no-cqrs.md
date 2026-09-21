@@ -40,3 +40,8 @@ follow with "go to definition".
 - You need a persistent audit of every command executed.
 - Reads dominate and their shape diverges from the aggregates: add read models first;
   a bus is still optional.
+
+## Proof
+
+No executable proof: the decision is the absence of a pattern. There is no runtime property
+to falsify; use cases being plain classes is visible in `application/use_cases.py`.

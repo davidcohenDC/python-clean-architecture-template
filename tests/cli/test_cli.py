@@ -72,6 +72,7 @@ def test_memory_backend_is_refused(capsys):
         main(["tournaments", "list"], settings=make_settings(database_url="memory://"))
 
 
+@pytest.mark.proof("events-after-commit")
 def test_cli_dispatches_events_after_the_command_committed(settings, capsys, monkeypatch):
     from cleanarch.bootstrap import cli as cli_module
     from cleanarch.shared.infrastructure.events import InProcessEventBus

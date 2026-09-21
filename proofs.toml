@@ -1,0 +1,55 @@
+# Executable architecture proofs.
+#
+# Each entry is a property this template claims. The evidence is the set of tests
+# marked `@pytest.mark.proof("<id>")`; `make proof` runs exactly those and reports
+# one line per entry. ADRs reference an id as `proof:<id>` in their "## Proof"
+# section, or state `No executable proof: <reason>`. `tests/proofs/test_registry.py`
+# fails when this file, the markers, the ADRs and the README disagree.
+#
+# This is not a proof that "the architecture is correct": it is a list of specific,
+# falsifiable guarantees, each backed by a real test you can read.
+
+[dependency-rule]
+title = "Dependency rule"
+claim = "Every module imports only from its own ring or an inner one; domain and application import nothing third-party."
+adr = ["001", "006"]
+
+[feature-isolation]
+title = "Feature isolation"
+claim = "A feature never imports another feature; shared never imports a feature."
+adr = ["001"]
+
+[repository-contract]
+title = "Repository contract"
+claim = "The in-memory and the SQL repository pass the same contract tests and are interchangeable."
+adr = ["008"]
+
+[optimistic-concurrency]
+title = "Optimistic concurrency"
+claim = "A stale write never overwrites a newer one: it raises ConflictError on every adapter, and HTTP answers 409."
+adr = ["010"]
+
+[transaction-boundary]
+title = "Transaction boundary"
+claim = "One transaction per request, committed before the response is sent; a failed commit is a 500 and persists nothing."
+adr = ["004"]
+
+[events-after-commit]
+title = "Events after commit"
+claim = "Domain events are dispatched only after a successful commit; rolled-back work dispatches nothing; a failing handler does not change the response."
+adr = ["005"]
+
+[authorization-in-application]
+title = "Authorization in the application ring"
+claim = "Who may act is decided by use cases on an Actor, testable without HTTP; the HTTP adapter only authenticates (401/403 mapping)."
+adr = ["009"]
+
+[error-contract]
+title = "HTTP error contract"
+claim = "Unknown routes, wrong methods and unexpected failures use the same error envelope, and every error response carries the request id."
+adr = []
+
+[example-removal]
+title = "Example removal"
+claim = "init_project.py --remove-example leaves a project that lints, passes its whole suite, migrates from an empty database and serves /health."
+adr = ["001"]

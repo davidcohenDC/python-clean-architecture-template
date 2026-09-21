@@ -47,3 +47,8 @@ interchangeable adapters" must also promise they fail the same way.
 - The `version` field is invisible to HTTP clients today. Exposing it (for example as an
   `ETag`) is a one-line change in the response schema when a client needs to send
   `If-Match`.
+
+## Proof
+
+- proof:optimistic-concurrency - two independent readers race on one row on both adapters;
+  the second write raises `ConflictError`, exactly one version is stored, HTTP answers 409.

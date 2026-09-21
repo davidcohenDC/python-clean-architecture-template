@@ -1,6 +1,6 @@
 # Every target is a thin alias for a command you can also type by hand (see README).
 .DEFAULT_GOAL := help
-.PHONY: help install run run-memory test test-fast lint format typecheck check migrate migration docs docs-build clean new-feature
+.PHONY: help install run run-memory test test-fast lint format typecheck check proof graph migrate migration docs docs-build clean new-feature
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -32,7 +32,7 @@ format: ## Auto-fix lint issues and format
 typecheck: ## mypy --strict
 	uv run mypy
 
-check: lint typecheck test ## Everything CI runs
+check: lint typecheck proof test ## Everything CI runs
 
 migrate: ## Apply database migrations
 	uv run alembic upgrade head
@@ -51,3 +51,9 @@ docs-build: ## Build the documentation site
 
 clean: ## Remove caches and build artefacts
 	rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage dist build dev.db
+
+proof: ## Run the executable architecture guarantees (proofs.toml) and print the verdict
+	uv run python scripts/proof.py
+
+graph: ## Regenerate the dependency graph page from the code
+	uv run python scripts/graph.py

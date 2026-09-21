@@ -105,6 +105,10 @@ def remove_example(pkg: str) -> None:
             path.write_text(updated, encoding="utf-8")
     print("removed the tournaments example feature (and its migrations: the chain is empty)")
     print("next: uv run python scripts/new_feature.py <your_feature>")
+    print(
+        "note: `make proof` now reports NO EVIDENCE for the guarantees the example used to "
+        "prove; mark the tests of your feature with @pytest.mark.proof(...) or edit proofs.toml"
+    )
 
 
 def main() -> None:
@@ -124,6 +128,8 @@ def main() -> None:
     if ruff := shutil.which("ruff"):  # tidy imports/blank lines left behind by the edits
         subprocess.run([ruff, "check", "--fix", "-q", str(ROOT)], check=False)
         subprocess.run([ruff, "format", "-q", str(ROOT)], check=False)
+    if (ROOT / "docs" / "docs" / "architecture" / "dependency-graph.md").exists():
+        subprocess.run([sys.executable, str(ROOT / "scripts" / "graph.py")], check=False)
     print("done - review with `git diff`, then run `make check`")
 
 

@@ -39,3 +39,11 @@ tests enforce both, and enforce the ring order inside every package.
   than in a layer-first tree; it is simply applied per feature.
 - `shared/` is under permanent pressure to grow. The rule: something goes there only when
   two features need it *and* it has no feature-specific meaning.
+
+## Proof
+
+- proof:dependency-rule - every module imports inward; checked on the real package and
+  falsified on synthetic packages (`tests/architecture`).
+- proof:feature-isolation - no feature imports another, `shared` imports no feature.
+- proof:example-removal - the layout's promise that the example is one folder plus marked
+  blocks: `init_project.py --remove-example` leaves a working project (`tests/scripts`).

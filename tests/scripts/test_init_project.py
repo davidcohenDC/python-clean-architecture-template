@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.contract
+pytestmark = [pytest.mark.contract, pytest.mark.proof("example-removal")]
 
 ROOT = Path(__file__).resolve().parents[2]
 COPIED = [
@@ -22,6 +22,8 @@ COPIED = [
     "tests",
     "alembic",
     "scripts",
+    "docs/docs",
+    "proofs.toml",
     "pyproject.toml",
     "alembic.ini",
     "release.config.mjs",
@@ -39,6 +41,7 @@ def stripped_project(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, di
     target = tmp_path_factory.mktemp("stripped")
     for name in COPIED:
         source = ROOT / name
+        (target / name).parent.mkdir(parents=True, exist_ok=True)
         if source.is_dir():
             shutil.copytree(source, target / name, ignore=shutil.ignore_patterns("__pycache__"))
         else:

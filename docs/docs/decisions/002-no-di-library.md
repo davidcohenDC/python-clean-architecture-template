@@ -44,3 +44,8 @@ If the object graph gets deep (use cases depending on services depending on serv
 the factories in `dependencies.py` become the bulk of the file, a lightweight container
 (`dishka` integrates with FastAPI cleanly) can replace the placeholders without touching
 `application/`.
+
+## Proof
+
+No executable proof: this is a wiring choice. Its effect - no container, no registry - is
+visible by reading `bootstrap/app.py`; a test could only assert the absence of a library.

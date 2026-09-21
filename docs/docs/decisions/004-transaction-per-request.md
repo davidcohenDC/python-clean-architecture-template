@@ -52,3 +52,8 @@ Introduce a `UnitOfWork` port ([recipe](../guides/extending#unit-of-work)) when:
   case rather than implied by the request;
 - use cases run outside HTTP (workers, CLI) and there is no request to scope the session to;
 - you need to commit *before* publishing to an external system.
+
+## Proof
+
+- proof:transaction-boundary - commit happens before the response is sent, a domain error
+  rolls back, a failed commit is a `500` and persists nothing (`tests/api/test_transaction.py`).

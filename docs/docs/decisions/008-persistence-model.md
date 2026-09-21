@@ -40,3 +40,9 @@ JSON column with a documented shape. The repository is the only caller of the ma
 Phases stored as JSON cannot be queried by SQL. If you need "all tournaments with a Swiss
 phase", promote phases to a child table in a migration; the mapping changes, the domain
 does not.
+
+## Proof
+
+- proof:repository-contract - the in-memory and the SQLAlchemy repositories pass the same
+  contract, including a real re-read through a fresh session
+  (`tests/integration/test_tournament_repository_contract.py`).

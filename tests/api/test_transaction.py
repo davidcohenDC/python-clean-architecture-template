@@ -18,7 +18,7 @@ from cleanarch.tournaments.infrastructure.sqlalchemy import TournamentModel
 from tests.api.conftest import VALID_PAYLOAD
 from tests.conftest import make_settings
 
-pytestmark = pytest.mark.api
+pytestmark = [pytest.mark.api, pytest.mark.proof("transaction-boundary")]
 
 BASE = "/api/v1/tournaments"
 

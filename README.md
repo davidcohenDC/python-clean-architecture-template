@@ -21,29 +21,50 @@ executable architecture tests · Docker · GitHub Actions · semantic-release ·
 
 ---
 
-## Why this template
+## Don't trust the architecture diagram. Run it.
 
-Most "clean architecture" repositories have the folders but not the boundaries: the domain
-imports the ORM, use cases pull dependencies from a global container, and nothing stops the
-next commit from making it worse. Others have every pattern from the book and no explanation
-of which ones the problem actually needed.
-
-This one is different in three verifiable ways:
-
-1. **The boundaries are tests.** `tests/architecture` parses every module and fails the build
-   if a dependency points outward or a framework leaks into `domain`/`application`.
-   It runs in the pre-commit hook and in CI.
-2. **Every pattern has a written reason - including the absent ones.** Eight ADRs explain
-   why there is no DI container, no mediator, no Unit of Work, no outbox, and exactly when
-   you should add each.
-3. **The example is removed with one command.** `shared/` + `bootstrap/` are the template;
-   `tournaments/` is the example. `scripts/init_project.py --remove-example` deletes it,
-   `scripts/new_feature.py` scaffolds yours with all four rings wired.
+```bash
+make proof
+```
 
 ```text
-git clone / use template → make install → make run → open /docs
-   → read one feature → understand the architecture → replace the example → build
+ARCHITECTURE PROOF
+
+  Dependency rule                       PASS         ADR-001, ADR-006
+  Feature isolation                     PASS         ADR-001
+  Repository contract                   PASS         ADR-008
+  Optimistic concurrency                PASS         ADR-010
+  Transaction boundary                  PASS         ADR-004
+  Events after commit                   PASS         ADR-005
+  Authorization in the application ring PASS         ADR-009
+  HTTP error contract                   PASS         no ADR
+  Example removal                       PASS         ADR-001
+
+9/9 executable guarantees passed
 ```
+
+Every "clean architecture" repository has the folders and the diagram. This one has a
+short list of **specific, falsifiable guarantees**, each backed by real tests you can read,
+each traced to the decision it implements, and a command that runs exactly those tests and
+fails the build when one stops being true. The list lives in [`proofs.toml`](proofs.toml);
+`make proof` cannot be green by default: a guarantee with no evidence is reported as such.
+
+| Guarantee | What is checked | Where |
+|---|---|---|
+| `proof:dependency-rule` | every module imports inward; `domain`/`application` import nothing third-party; falsified on 13 synthetic violations | `tests/architecture` |
+| `proof:feature-isolation` | no feature imports another; `shared` imports no feature | `tests/architecture` |
+| `proof:repository-contract` | in-memory and SQL repositories pass the same contract | `tests/integration` |
+| `proof:optimistic-concurrency` | two readers race on one row: the stale write raises `ConflictError`, HTTP says 409 | `tests/integration`, `tests/api` |
+| `proof:transaction-boundary` | commit before the response is sent; failed commit → 500, nothing persisted | `tests/api` |
+| `proof:events-after-commit` | handlers run after commit and see committed rows; rollback dispatches nothing | `tests/api`, `tests/cli` |
+| `proof:authorization-in-application` | who may act is decided on an `Actor` in use cases, testable without HTTP | `tests/application`, `tests/api` |
+| `proof:error-contract` | one error envelope for 404/405/500, request id on every response | `tests/api` |
+| `proof:example-removal` | `init_project.py --remove-example` leaves a project that lints, tests, migrates and serves | `tests/scripts` |
+
+**What this is not.** It is not a proof that the architecture is *correct*, complete or
+suited to your problem, and it does not cover what your own code will do. It is the list of
+properties this template promises, kept honest by CI. Decisions without a runtime property
+(no DI library, no mediator, the stack) say so in their ADR: `No executable proof`.
 
 ## Quick start
 
@@ -212,6 +233,8 @@ lines in `bootstrap/app.py` and `POST /api/v1/orders` works.
 
 | | |
 |---|---|
+| `make proof` | the executable architecture guarantees, one verdict each (~20 s) |
+| `make graph` | regenerate the dependency graph page from the code |
 | `make test` / `make test-fast` | full suite with coverage / domain + application + architecture only |
 | `make lint` / `make format` / `make typecheck` | Ruff, Ruff --fix, mypy --strict |
 | `make migrate` / `make migration m="..."` | Alembic upgrade / autogenerate |

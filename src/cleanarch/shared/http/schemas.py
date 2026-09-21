@@ -14,5 +14,5 @@ class Schema(BaseModel):
 class ErrorResponse(Schema):
     """Uniform error envelope returned by every handler in ``errors.py``."""
 
-    error: str = Field(description="Machine-readable error type, e.g. TournamentNotFound")
+    error: str = Field(description="Machine-readable error type, e.g. OrderNotFound")
     message: str = Field(description="Human-readable explanation")

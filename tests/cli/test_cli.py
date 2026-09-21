@@ -8,6 +8,7 @@ import pytest
 from cleanarch.bootstrap import Settings
 from cleanarch.bootstrap.cli import main
 from cleanarch.shared.infrastructure.database import Base, make_engine
+from tests.conftest import make_settings
 
 pytestmark = pytest.mark.api
 
@@ -23,7 +24,7 @@ def settings(tmp_path: Path) -> Settings:
         await engine.dispose()
 
     asyncio.run(create_schema())
-    return Settings(database_url=url, environment="test")
+    return make_settings(database_url=url)
 
 
 def run(settings: Settings, *argv: str, capsys) -> tuple[int, str, str]:
@@ -68,4 +69,4 @@ def test_unknown_id_is_a_clean_error(settings, capsys):
 
 def test_memory_backend_is_refused(capsys):
     with pytest.raises(SystemExit):
-        main(["tournaments", "list"], settings=Settings(database_url="memory://"))
+        main(["tournaments", "list"], settings=make_settings(database_url="memory://"))

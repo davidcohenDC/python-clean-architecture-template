@@ -1,7 +1,7 @@
 class DomainError(Exception):
     """Base class for every rule violation raised by the domain.
 
-    Subclass it per feature with a *specific* name (``TournamentAlreadyStarted``)
+    Subclass it per feature with a *specific* name (``OrderAlreadySubmitted``)
     instead of passing free-form messages around: the HTTP layer maps types to
     status codes, and tests assert on types, not on strings.
     """

@@ -116,6 +116,7 @@ markers = [
     "integration: tests that hit real infrastructure (database)",
     "api: HTTP boundary tests",
     "architecture: tests that enforce the Dependency Rule",
+    "contract: end-to-end contracts run on a temporary copy of the project (slower)",
 ]
 
 [tool.coverage.run]

@@ -12,10 +12,11 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from cleanarch.bootstrap import Settings, create_app
+from cleanarch.bootstrap import create_app
 from cleanarch.shared.infrastructure.database import Base
 from cleanarch.tournaments.infrastructure.sqlalchemy import TournamentModel
 from tests.api.conftest import VALID_PAYLOAD
+from tests.conftest import make_settings
 
 pytestmark = pytest.mark.api
 
@@ -24,7 +25,7 @@ BASE = "/api/v1/tournaments"
 
 @pytest.fixture
 async def sqlite_app() -> AsyncIterator[tuple[AsyncClient, object]]:
-    app = create_app(Settings(database_url="sqlite+aiosqlite://", environment="test"))
+    app = create_app(make_settings(database_url="sqlite+aiosqlite://"))
     async with app.router.lifespan_context(app):
         async with app.state.engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)

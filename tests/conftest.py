@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+from cleanarch.bootstrap.settings import Settings
 from cleanarch.shared.application.actor import Actor
 from cleanarch.shared.domain.events import DomainEvent
 from cleanarch.shared.infrastructure.clock import FixedClock
@@ -81,6 +82,11 @@ class RecordingEventPublisher:
 
     async def publish(self, events: Sequence[DomainEvent]) -> None:
         self.events.extend(events)
+
+
+def make_settings(**overrides: object) -> Settings:
+    """Settings for tests: explicit values only, never the developer's ``.env``."""
+    return Settings(_env_file=None, environment="test", **overrides)  # type: ignore[arg-type]
 
 
 @pytest.fixture

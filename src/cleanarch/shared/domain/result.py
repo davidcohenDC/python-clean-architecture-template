@@ -9,12 +9,12 @@ class DomainResult[T]:
     """The outcome of a state-changing domain operation: new state + events.
 
     Aggregates in this template are immutable, so a method such as
-    ``Tournament.start()`` cannot mutate ``self`` and append to an internal
+    ``Order.submit()`` cannot mutate ``self`` and append to an internal
     event list. It returns a ``DomainResult`` instead::
 
-        result = tournament.start()
-        result.aggregate   # the new Tournament
-        result.events      # (TournamentStarted(...),)
+        result = order.submit()
+        result.aggregate   # the new Order
+        result.events      # (OrderSubmitted(...),)
 
     Use cases persist ``aggregate`` and publish ``events``. Nothing else needs
     to know how events are collected.

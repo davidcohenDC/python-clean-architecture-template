@@ -11,6 +11,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from cleanarch.bootstrap import Settings, create_app
+from tests.conftest import make_settings
 
 API_KEYS = {"alice-key": "alice", "bob-key": "bob", "root-key": "root:admin"}
 
@@ -26,14 +27,14 @@ async def make_client(settings: Settings) -> AsyncIterator[AsyncClient]:
 @pytest.fixture
 async def client() -> AsyncIterator[AsyncClient]:
     """Open API (no API_KEYS): everyone is the anonymous actor."""
-    async for c in make_client(Settings(database_url="memory://", environment="test")):
+    async for c in make_client(make_settings(database_url="memory://")):
         yield c
 
 
 @pytest.fixture
 async def secured_client() -> AsyncIterator[AsyncClient]:
     """Same app with API keys configured."""
-    settings = Settings(database_url="memory://", environment="test", api_keys=API_KEYS)
+    settings = make_settings(database_url="memory://", api_keys=API_KEYS)
     async for c in make_client(settings):
         yield c
 

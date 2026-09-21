@@ -53,8 +53,11 @@ EXAMPLE_PATHS = [
     "tests/api/test_tournaments_api.py",
     "tests/api/test_transaction.py",
     "tests/cli/test_cli.py",
-    "alembic/versions/20260919_0001_create_tournaments.py",
 ]
+
+# Every migration shipped with the template belongs to the example: the template itself
+# owns no tables. Removing the example therefore empties the chain instead of cherry-picking.
+EXAMPLE_MIGRATIONS = "alembic/versions"
 
 MARKER = re.compile(
     r"^[ \t]*# >>> example: tournaments\n.*?^[ \t]*# <<< example: tournaments\n",
@@ -91,12 +94,14 @@ def remove_example(pkg: str) -> None:
             shutil.rmtree(path)
         elif path.exists():
             path.unlink()
+    for migration in (ROOT / EXAMPLE_MIGRATIONS).glob("*.py"):
+        migration.unlink()
     for path in text_files():
         content = path.read_text(encoding="utf-8")
         updated = MARKER.sub("", content)
         if updated != content:
             path.write_text(updated, encoding="utf-8")
-    print("removed the tournaments example feature")
+    print("removed the tournaments example feature (and its migrations: the chain is empty)")
     print("next: uv run python scripts/new_feature.py <your_feature>")
 
 

@@ -6,10 +6,11 @@ import logging
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from cleanarch.bootstrap import Settings, create_app
+from cleanarch.bootstrap import create_app
 from cleanarch.bootstrap.logging import JsonFormatter, RequestIdFilter
 from cleanarch.shared.http.request_id import request_id_var
 from tests.api.conftest import make_client
+from tests.conftest import make_settings
 
 pytestmark = pytest.mark.api
 
@@ -31,18 +32,14 @@ async def test_ready_reports_memory_backend(client: AsyncClient):
 
 
 async def test_ready_checks_the_database():
-    async for client in make_client(
-        Settings(database_url="sqlite+aiosqlite://", environment="test")
-    ):
+    async for client in make_client(make_settings(database_url="sqlite+aiosqlite://")):
         response = await client.get("/ready")
         assert response.status_code == 200
         assert response.json()["database"] == "ok"
 
 
 async def test_ready_is_503_when_the_database_is_unreachable():
-    settings = Settings(
-        database_url="postgresql+asyncpg://nobody@127.0.0.1:1/none", environment="test"
-    )
+    settings = make_settings(database_url="postgresql+asyncpg://nobody@127.0.0.1:1/none")
     app = create_app(settings)
     transport = ASGITransport(app=app)
     async with (

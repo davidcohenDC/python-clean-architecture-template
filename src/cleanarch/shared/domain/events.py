@@ -13,7 +13,7 @@ class DomainEvent:
 
     ``event_id`` and ``occurred_at`` are metadata: two events with the same
     payload are *equal* even if they were raised at different times. That is
-    what makes ``assert result.events == (TournamentStarted(id),)`` possible.
+    what makes ``assert result.events == (OrderSubmitted(id),)`` possible.
     """
 
     event_id: str = field(default_factory=lambda: uuid.uuid4().hex, compare=False)

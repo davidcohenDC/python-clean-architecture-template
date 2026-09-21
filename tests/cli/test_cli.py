@@ -70,3 +70,29 @@ def test_unknown_id_is_a_clean_error(settings, capsys):
 def test_memory_backend_is_refused(capsys):
     with pytest.raises(SystemExit):
         main(["tournaments", "list"], settings=make_settings(database_url="memory://"))
+
+
+def test_cli_dispatches_events_after_the_command_committed(settings, capsys, monkeypatch):
+    from cleanarch.bootstrap import cli as cli_module
+    from cleanarch.shared.infrastructure.events import InProcessEventBus
+    from cleanarch.tournaments.domain import TournamentStarted
+
+    seen: list[str] = []
+
+    async def on_started(event: TournamentStarted) -> None:
+        seen.append(event.tournament_id)
+
+    def bus_with_spy() -> InProcessEventBus:
+        bus = InProcessEventBus()
+        bus.subscribe(TournamentStarted, on_started)
+        return bus
+
+    monkeypatch.setattr(cli_module, "build_event_bus", bus_with_spy)
+    _, out, _ = run(settings, "tournaments", "create", "Cup", capsys=capsys)
+    tournament_id = out.split()[0]
+
+    code, _, _ = run(settings, "tournaments", "start", tournament_id, capsys=capsys)
+    failed, _, _ = run(settings, "tournaments", "start", tournament_id, capsys=capsys)
+
+    assert code == 0 and failed == 1
+    assert seen == [tournament_id], "one commit, one dispatch; the failed command published nothing"

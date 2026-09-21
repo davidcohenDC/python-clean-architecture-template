@@ -4,7 +4,8 @@ Read this file top to bottom and you know how the whole system is assembled:
 
 1. settings decide which adapters to use;
 2. shared adapters are created once; ``TransactionMiddleware`` opens one DB
-   session per request and commits it before the response is sent;
+   session per request and commits it before the response is sent, then
+   ``EventDispatchMiddleware`` runs the handlers for the events it collected;
 3. each feature's placeholder dependencies are overridden with real providers;
 4. routers are mounted.
 
@@ -23,20 +24,24 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cleanarch import __version__
+from cleanarch.bootstrap.events import build_event_bus
 from cleanarch.bootstrap.logging import configure_logging
 from cleanarch.bootstrap.settings import Settings, get_settings
-from cleanarch.bootstrap.transaction import TransactionMiddleware, get_session
+from cleanarch.bootstrap.transaction import (
+    EventDispatchMiddleware,
+    TransactionMiddleware,
+    get_events,
+    get_session,
+)
 from cleanarch.shared.http.dependencies import get_clock, get_event_publisher
 from cleanarch.shared.http.errors import register_error_handlers
 from cleanarch.shared.http.request_id import RequestIdMiddleware
 from cleanarch.shared.infrastructure.clock import SystemClock
 from cleanarch.shared.infrastructure.database import make_engine, make_session_factory
-from cleanarch.shared.infrastructure.events import InProcessEventBus
 
 # isort: split
 # >>> example: tournaments
 from cleanarch.tournaments.application import TournamentRepository
-from cleanarch.tournaments.domain import TournamentStarted
 from cleanarch.tournaments.http import get_tournament_repository
 from cleanarch.tournaments.http import router as tournaments_router
 from cleanarch.tournaments.infrastructure.in_memory import InMemoryTournamentRepository
@@ -56,9 +61,7 @@ Session = Annotated[AsyncSession, Depends(get_session)]
 
 def wire_shared(app: FastAPI, settings: Settings) -> None:
     app.state.actors = settings.actors  # read by shared.http.auth.get_actor
-    event_bus = InProcessEventBus()
-    app.state.event_bus = event_bus  # features subscribe their handlers here
-    app.dependency_overrides[get_event_publisher] = lambda: event_bus
+    app.dependency_overrides[get_event_publisher] = get_events  # per-request collector
     clock = SystemClock()
     app.dependency_overrides[get_clock] = lambda: clock
 
@@ -77,11 +80,6 @@ def wire_tournaments(app: FastAPI, settings: Settings) -> None:
 
         app.dependency_overrides[get_tournament_repository] = sqlalchemy_repository
 
-    async def announce(event: TournamentStarted) -> None:
-        # Example subscriber. Replace with e-mail, webhook, broker... or delete.
-        logger.info("Tournament %s is live!", event.tournament_id)
-
-    app.state.event_bus.subscribe(TournamentStarted, announce)
     app.include_router(tournaments_router, prefix="/api/v1")
 
 
@@ -110,12 +108,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         description="Clean Architecture reference API. Replace the example feature with yours.",
     )
     register_error_handlers(app)
+
+    # Middlewares, innermost first (Starlette wraps each new one around the previous):
+    # transaction -> event dispatch -> request id. See bootstrap/transaction.py.
     if not settings.use_in_memory:
         # Creating the engine opens no connection; the first request does.
         app.state.engine = make_engine(settings.database_url, echo=settings.database_echo)
         app.state.session_factory = make_session_factory(app.state.engine)
         app.add_middleware(TransactionMiddleware, session_factory=app.state.session_factory)
-    app.add_middleware(RequestIdMiddleware)  # outermost: every response carries the id
+    app.state.event_bus = build_event_bus()  # subscribers live in bootstrap/events.py
+    app.add_middleware(
+        EventDispatchMiddleware, bus=app.state.event_bus, transactional=not settings.use_in_memory
+    )
+    app.add_middleware(RequestIdMiddleware)
 
     wire_shared(app, settings)
     # >>> example: tournaments

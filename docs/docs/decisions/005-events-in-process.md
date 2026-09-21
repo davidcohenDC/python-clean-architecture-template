@@ -18,16 +18,26 @@ which the example needed.
 
 - Domain methods return `DomainResult(aggregate, events)`. Events are frozen dataclasses
   carrying primitives; `event_id` and `occurred_at` are excluded from equality.
-- The application ring has one port, `EventPublisher.publish(events)`.
-- The shipped adapter, `InProcessEventBus`, awaits every subscribed handler inside the
-  request. Handlers are subscribed in `bootstrap`.
+- The application ring has one port, `EventPublisher.publish(events)`. Publishing
+  **records** events in the current unit of work; it does not run anything.
+- `bootstrap` dispatches the recorded events **after the transaction committed**
+  (`EventDispatchMiddleware` for HTTP, the same two steps in `bootstrap/cli.py`), through
+  `InProcessEventBus`, sequentially, in publication order. Subscribers are registered in
+  `bootstrap/events.py`.
 - No outbox, no broker, no background tasks.
 
 ## Consequences
 
 - Events are testable as values: `assert result.events == (TournamentStarted(id),)`.
-- Delivery is synchronous and transactional with the request: a failing handler fails the
-  request and rolls back the write. Simple to reason about, no lost events.
+- A handler that reads the database sees the **committed** state (it may open its own
+  session). Verified in `tests/api/test_events.py` on a SQLite file.
+- A rolled-back request (domain error, 4xx/5xx, failed commit) dispatches nothing.
+- A failing handler is logged with the request id and does **not** change the response:
+  the write is already committed and telling the client otherwise would lie. Other handlers
+  still run.
+- What is **not** guaranteed: delivery if the process dies between commit and dispatch,
+  and retries. Delivery is at-most-once, best-effort. That is precisely the gap an outbox
+  fills; until you need it, this is simpler and honest.
 - Handlers must be fast and local. E-mail, third-party calls and anything retry-worthy do
   not belong in an in-process handler.
 - There is no integration-event / domain-event split. Until an event leaves the process,
@@ -41,4 +51,5 @@ Add an outbox ([recipe](../guides/extending#background-jobs--outbox)) when a han
 - is slow enough to hurt latency;
 - lives in another process or service.
 
-The port does not change: `OutboxEventPublisher` implements the same `publish`.
+The port does not change: an outbox-backed `EventPublisher` records the same events in a
+table inside the transaction, and a worker delivers them with retries.

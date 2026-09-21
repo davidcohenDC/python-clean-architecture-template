@@ -31,11 +31,10 @@ sequenceDiagram
     U->>T: tournament.start()
     T-->>U: DomainResult(aggregate=started, events=(TournamentStarted,))
     U->>P: save(started)
-    U->>E: publish(events)
-    E-->>U: handlers awaited
+    U->>E: publish(events) - recorded, not run yet
     U-->>R: started Tournament
     R-->>C: 200 TournamentResponse.from_domain(started)
-    Note over B: TransactionMiddleware commits<br/>before the response is sent,<br/>rolls back on error
+    Note over B: TransactionMiddleware commits<br/>before the response is sent,<br/>then EventDispatchMiddleware<br/>runs the handlers
 ```
 
 ## Step by step
@@ -62,9 +61,8 @@ sequenceDiagram
 5. **Persisting** - `SqlAlchemyTournamentRepository.save()` maps the aggregate to the row model
    and flushes. It never commits: the session it received belongs to the request.
 
-6. **Events** - `InProcessEventBus.publish()` awaits each subscribed handler (in the example,
-   one that logs "Tournament is live"). If a handler raises, the request fails and the
-   transaction rolls back - a deliberate, simple guarantee.
+6. **Events** - `publish()` only *records* the events in the request's `CollectedEvents`.
+   Nothing runs yet: handlers need committed state.
 
 7. **Presenting** - the router converts the domain object to `TournamentResponse` and FastAPI
    serialises it. The domain object never reaches the wire directly.
@@ -74,6 +72,12 @@ sequenceDiagram
    *before* the response leaves the process; on `4xx`/`5xx` or an exception it rolls back;
    if the commit itself fails the client gets `500 TransactionFailed` instead of a false
    success. See [ADR-004](../decisions/004-transaction-per-request).
+
+9. **Event dispatch** - only after a successful commit, `EventDispatchMiddleware` hands the
+   collected events to `InProcessEventBus`, which runs the subscribers in order (in the
+   example, one that logs "Tournament is live"). A failing subscriber is logged with the
+   request id and does not change the response; a rolled-back request dispatches nothing.
+   See [ADR-005](../decisions/005-events-in-process).
 
 ## What happens on errors
 

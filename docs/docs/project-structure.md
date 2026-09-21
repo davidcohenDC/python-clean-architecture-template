@@ -19,7 +19,7 @@ src/cleanarch/
 │   │                  actor.py       Actor, ANONYMOUS
 │   │                  ports.py       EventPublisher, Clock (Protocols)
 │   ├── infrastructure/database.py   engine, session factory, transaction()
-│   │                  events.py      InProcessEventBus
+│   │                  events.py      CollectedEvents (port impl), InProcessEventBus (handlers)
 │   │                  clock.py       SystemClock, FixedClock
 │   └── http/          errors.py      exception → HTTP status mapping
 │                      auth.py        API-key authentication → Actor
@@ -47,7 +47,8 @@ src/cleanarch/
 ├── bootstrap/                     TEMPLATE - composition root
 │   ├── settings.py                Settings (pydantic-settings)
 │   ├── logging.py                 text or JSON logs, request id on every line
-│   ├── transaction.py             TransactionMiddleware: one session per request, commit before send
+│   ├── transaction.py             TransactionMiddleware + EventDispatchMiddleware: commit, then events
+│   ├── events.py                  build_event_bus(): the subscribers
 │   ├── app.py                     create_app(): wires ports → adapters, routers, /health, /ready
 │   └── cli.py                     the same wiring for the command line
 ├── main.py                        app = create_app()   # uvicorn cleanarch.main:app

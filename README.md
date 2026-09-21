@@ -105,10 +105,10 @@ sequenceDiagram
     U->>T: tournament.start()
     T-->>U: DomainResult(new Tournament, (TournamentStarted,))
     U->>P: repository.save(new)
-    U->>E: publish(events)
+    U->>E: publish(events)   (recorded)
     U-->>R: Tournament
     R-->>C: 200 TournamentResponse.from_domain(...)
-    Note over P: TransactionMiddleware commits before the response is sent
+    Note over P,E: commit, then the handlers run - never before
 ```
 
 ## Project layout
@@ -201,7 +201,7 @@ lines in `bootstrap/app.py` and `POST /api/v1/orders` works.
 | No DI library | `Depends` + `dependency_overrides` in one composition root; nothing to learn | the object graph gets deep | [002](docs/docs/decisions/002-no-di-library.md) |
 | No mediator / CQRS bus | use cases are classes you call; greppable | several entrypoints need one pipeline | [003](docs/docs/decisions/003-no-mediator-no-cqrs.md) |
 | Transaction per request, no UoW | session opened/committed by the HTTP layer; use cases stay 4 lines | two aggregates per operation, or non-HTTP entrypoints | [004](docs/docs/decisions/004-transaction-per-request.md) |
-| Events in-process | values returned by domain methods, awaited in the request | a handler must outlive the request (e-mail, broker) | [005](docs/docs/decisions/005-events-in-process.md) |
+| Events in-process, after commit | values returned by domain methods, dispatched once the transaction committed; at-most-once | a handler must survive a crash or be retried (outbox) | [005](docs/docs/decisions/005-events-in-process.md) |
 | FastAPI + SQLAlchemy 2 + Alembic + uv + Ruff + mypy | mainstream, typed, confined to the outer rings | - | [006](docs/docs/decisions/006-stack.md) |
 | Shape in Pydantic, rules in the domain | one source of truth per rule, on every entry path | - | [007](docs/docs/decisions/007-validation-placement.md) |
 | Separate row model + explicit mapping | frozen dataclass domain; table evolves independently | - | [008](docs/docs/decisions/008-persistence-model.md) |

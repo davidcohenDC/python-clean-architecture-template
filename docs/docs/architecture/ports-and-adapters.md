@@ -20,7 +20,7 @@ flowchart LR
     end
     MEM["InMemoryTournamentRepository"] -. implements .-> RP
     SQL["SqlAlchemyTournamentRepository"] -. implements .-> RP
-    BUS["InProcessEventBus"] -. implements .-> EP
+    BUS["CollectedEvents<br/>(dispatched after commit)"] -. implements .-> EP
     REC["RecordingEventPublisher<br/>(tests)"] -. implements .-> EP
     style UC fill:#2563eb,color:#fff,stroke:none
     style RP fill:#2563eb,color:#fff,stroke:none

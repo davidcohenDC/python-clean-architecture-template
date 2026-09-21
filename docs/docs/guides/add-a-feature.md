@@ -117,7 +117,8 @@ Write `tests/api/test_orders_api.py`, including one test per error mapping.
 ### 5. Bootstrap - choose adapters
 
 In `bootstrap/app.py` add `wire_orders(app, settings)` next to `wire_tournaments`: pick the
-repository based on `settings.use_in_memory`, subscribe event handlers if any, include the router.
+repository based on `settings.use_in_memory` and include the router. Subscribe event handlers,
+if any, in `bootstrap/events.py`; they run after the request's transaction committed.
 
 ### 6. Check
 

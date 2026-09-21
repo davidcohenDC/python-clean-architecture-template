@@ -15,8 +15,6 @@ from cleanarch.tournaments.domain import (
 from tests.conftest import NOW
 from tests.tournaments.conftest import make_phases, make_tournament
 
-pytestmark = pytest.mark.domain
-
 
 class TestCreate:
     def test_generates_an_id_and_emits_created(self):

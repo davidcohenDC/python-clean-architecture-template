@@ -10,8 +10,6 @@ from cleanarch.bootstrap.cli import main
 from cleanarch.shared.infrastructure.database import Base, make_engine
 from tests.conftest import make_settings
 
-pytestmark = pytest.mark.api
-
 
 @pytest.fixture
 def settings(tmp_path: Path) -> Settings:

@@ -23,7 +23,7 @@ from cleanarch.tournaments.infrastructure.sqlalchemy import TournamentModel
 from tests.conftest import make_settings
 from tests.tournaments.conftest import VALID_PAYLOAD
 
-pytestmark = [pytest.mark.api, pytest.mark.proof("events-after-commit")]
+pytestmark = pytest.mark.proof("events-after-commit")
 
 BASE = "/api/v1/tournaments"
 

@@ -10,8 +10,6 @@ from cleanarch.tournaments.domain import (
     TopCut,
 )
 
-pytestmark = pytest.mark.domain
-
 
 class TestRoundPhase:
     @pytest.mark.parametrize("rounds", [0, -1, 21])

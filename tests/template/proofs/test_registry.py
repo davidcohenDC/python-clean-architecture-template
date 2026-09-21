@@ -2,11 +2,7 @@
 
 from pathlib import Path
 
-import pytest
-
 from tests.template.proofs.registry import problems
-
-pytestmark = pytest.mark.architecture
 
 ROOT = Path(__file__).resolve().parents[3]
 

@@ -11,8 +11,6 @@ from cleanarch.bootstrap.logging import JsonFormatter, RequestIdFilter
 from cleanarch.shared.http.request_id import request_id_var
 from tests.conftest import make_client, make_settings
 
-pytestmark = pytest.mark.api
-
 
 @pytest.mark.proof("error-contract")
 async def test_every_response_carries_a_request_id(client: AsyncClient):
@@ -39,7 +37,7 @@ async def test_ready_checks_the_database():
 
 
 async def test_ready_is_503_when_the_database_is_unreachable():
-    settings = make_settings(database_url="postgresql+asyncpg://nobody@127.0.0.1:1/none")
+    settings = make_settings(database_url="sqlite+aiosqlite:///no/such/directory/app.db")
     app = create_app(settings)
     transport = ASGITransport(app=app)
     async with (

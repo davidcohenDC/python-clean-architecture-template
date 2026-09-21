@@ -6,7 +6,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
 authors = [{ name = "David Cohen" }]
-keywords = ["clean-architecture", "hexagonal-architecture", "ports-and-adapters", "fastapi", "template", "ddd"]
+keywords = ["clean-architecture", "hexagonal-architecture", "fastapi", "template"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Framework :: FastAPI",
@@ -76,7 +76,7 @@ select = [
 ]
 ignore = [
     "ANN401",   # Any is sometimes the honest type at the edges
-    "N818",     # domain errors are named after the rule (TournamentAlreadyStarted), not "...Error"
+    "N818",     # domain errors are named after the rule (OrderAlreadyShipped), not "...Error"
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -112,19 +112,15 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = "-q --strict-markers"
 markers = [
-    "domain: pure domain tests (no I/O, no framework)",
-    "application: use-case tests with fake adapters",
-    "integration: tests that hit real infrastructure (database)",
-    "api: HTTP boundary tests",
-    "architecture: tests that enforce the Dependency Rule",
-    "contract: end-to-end contracts run on a temporary copy of the project (slower)",
+    "integration: needs a real database (SQLite by default, TEST_DATABASE_URL to override)",
+    "contract: runs on a temporary copy of the project (slower)",
     "proof(*ids): evidence for the executable architecture guarantee(s) in proofs.toml",
 ]
 
 [tool.coverage.run]
 source = ["cleanarch"]
 branch = true
-omit = ["src/cleanarch/main.py"]
+omit = ["src/cleanarch/main.py", "src/cleanarch/__main__.py"]
 
 [tool.coverage.report]
 fail_under = 90

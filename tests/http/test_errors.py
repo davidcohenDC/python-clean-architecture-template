@@ -12,7 +12,7 @@ from httpx import ASGITransport, AsyncClient
 from cleanarch.bootstrap import create_app
 from tests.conftest import make_settings
 
-pytestmark = [pytest.mark.api, pytest.mark.proof("error-contract")]
+pytestmark = pytest.mark.proof("error-contract")
 
 
 async def test_unknown_route_is_404_in_the_envelope(client: AsyncClient):

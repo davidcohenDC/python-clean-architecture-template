@@ -3,8 +3,6 @@ from httpx import AsyncClient
 
 from tests.tournaments.conftest import VALID_PAYLOAD
 
-pytestmark = pytest.mark.api
-
 BASE = "/api/v1/tournaments"
 
 

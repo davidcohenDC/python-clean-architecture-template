@@ -27,8 +27,6 @@ from cleanarch.tournaments.infrastructure.in_memory import InMemoryTournamentRep
 from tests.conftest import ADMIN, ALICE, BOB, NOW
 from tests.tournaments.conftest import make_phases, make_tournament
 
-pytestmark = pytest.mark.application
-
 
 @pytest.fixture
 def repository() -> InMemoryTournamentRepository:

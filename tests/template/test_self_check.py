@@ -9,8 +9,6 @@ from pathlib import Path
 import pytest
 from archcheck import Violation, check
 
-pytestmark = pytest.mark.architecture
-
 
 def src(*lines: str) -> str:
     return "\n".join(lines) + "\n"

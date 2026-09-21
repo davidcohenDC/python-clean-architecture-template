@@ -15,9 +15,9 @@ depends on the folder layout. What it gives you:
   publisher, a fixed clock;
 - the **dependency rule as a tool**, not a test: `scripts/archcheck.py check` runs in
   `make check` and in CI whatever your tests look like;
-- tests for what you **inherit** (`tests/http`, `tests/bootstrap`): error envelope, request
-  ids, probes, the transaction/event unit of work - written against stub sessions and
-  throwaway routes, so they need no feature at all;
+- tests for what you **inherit** (`tests/http`, `tests/bootstrap`, `tests/shared`): error
+  envelope, request ids, probes, authentication, the transaction/event unit of work, the
+  CLI - written against stub features and throwaway routes, so they need no feature at all;
 - a worked **example** of how one feature can be tested at every level (`tests/tournaments`),
   removed with the example.
 
@@ -58,11 +58,14 @@ add it to the fixture's `params`. When you scaffold a feature, copy the file.
 
 ## What you inherit is tested without you
 
-- `tests/http/test_errors.py`, `test_ops.py`: unknown route, wrong method, unexpected
-  exception, request id on every response, `/health`, `/ready`.
+- `tests/http/test_errors.py`, `test_ops.py`, `test_auth.py`: unknown route, wrong method,
+  unexpected exception, request id on every response, `/health`, `/ready`, API keys → actor.
 - `tests/bootstrap/test_unit_of_work.py`: commit before the response, rollback on error,
   failed commit → 500, event handlers after commit, failing handler logged - on a stub
   session and a throwaway route, no feature involved.
+- `tests/bootstrap/test_cli.py`: the command line with a stub feature - one command, one
+  transaction, events after the commit, a domain error rolls back and exits 1.
+- `tests/shared/test_building_blocks.py`: errors, events, `DomainResult`, clocks.
 
 ## Architecture: a tool, and optionally a test
 

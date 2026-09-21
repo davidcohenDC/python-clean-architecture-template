@@ -2,12 +2,9 @@
 
 from pathlib import Path
 
-import pytest
 from archcheck import page
 
 import cleanarch
-
-pytestmark = pytest.mark.architecture
 
 ROOT = Path(cleanarch.__file__).parent
 PAGE = (

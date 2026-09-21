@@ -1,11 +1,8 @@
 """Error rows that need the example feature: resource 404, shape vs rule 422."""
 
-import pytest
 from httpx import AsyncClient
 
 from tests.tournaments.conftest import VALID_PAYLOAD
-
-pytestmark = pytest.mark.api
 
 BASE = "/api/v1/tournaments"
 

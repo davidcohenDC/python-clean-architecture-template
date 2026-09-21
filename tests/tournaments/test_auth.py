@@ -5,7 +5,7 @@ from httpx import AsyncClient
 
 from tests.tournaments.conftest import VALID_PAYLOAD
 
-pytestmark = [pytest.mark.api, pytest.mark.proof("authorization-in-application")]
+pytestmark = pytest.mark.proof("authorization-in-application")
 
 BASE = "/api/v1/tournaments"
 ALICE = {"X-API-Key": "alice-key"}

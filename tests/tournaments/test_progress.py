@@ -9,8 +9,6 @@ from cleanarch.tournaments.domain import (
 )
 from tests.tournaments.conftest import make_phases
 
-pytestmark = pytest.mark.domain
-
 
 def test_initial_state_is_not_started():
     progress = Progress()

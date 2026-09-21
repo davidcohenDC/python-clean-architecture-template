@@ -6,6 +6,11 @@ updates:
     groups:
       python: { patterns: ["*"] }
   - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      release: { patterns: ["*"] }
+  - package-ecosystem: npm
     directory: /docs
     schedule: { interval: weekly }
     groups:

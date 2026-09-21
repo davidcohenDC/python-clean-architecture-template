@@ -96,8 +96,8 @@ jobs:
         run: |
           uv run alembic upgrade head
           uv run alembic check
-      - name: Integration tests (PostgreSQL)
-        run: uv run pytest -m integration -q
+      - name: Whole suite on PostgreSQL (tests that read TEST_DATABASE_URL use it)
+        run: uv run pytest -q
 
   docker-build:
     runs-on: ubuntu-24.04

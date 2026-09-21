@@ -34,7 +34,7 @@ followed by an ${PURPLE}optional scope in parentheses${NC},
 an ${RED}exclamation mark${NC} (${RED}!${NC}) for a ${RED}breaking change${NC},
 a colon, and the subject.
 Examples:
-    ${GREEN}fix(tournaments): reject empty phase list${NC}
+    ${GREEN}fix(orders): reject empty order lines${NC}
     ${GREEN}feat(http): add pagination headers${NC}
     ${GREEN}refactor(shared)!: rename EventPublisher.publish${NC}
 "

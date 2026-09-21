@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help improve the template
+about: Something does not work as documented
 title: ""
 labels: ""
 assignees: ""
@@ -23,8 +23,8 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Template Version**
-The version of the template that you are using.
+**Version**
+The version you are using (`git describe --tags` or the release).
 
 **Additional context**
 Add any other context about the problem here.

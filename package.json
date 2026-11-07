@@ -8,7 +8,7 @@
   },
   "homepage": "https://github.com/davidcohenDC/python-clean-architecture-template#readme",
   "devDependencies": {
-    "semantic-release-preconfigured-conventional-commits": "1.1.157"
+    "semantic-release-preconfigured-conventional-commits": "1.1.158"
   },
   "engines": {
     "node": ">=22"
